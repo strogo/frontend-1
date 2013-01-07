@@ -8,6 +8,7 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
 public class DriverFactory {
@@ -23,7 +24,22 @@ public class DriverFactory {
 			capabilities.setJavascriptEnabled(true);
 			
 			driver = new HtmlUnitDriver(capabilities);
-		} else {
+			
+		} else if (type.equals("phantomJS")) {
+	      
+      // prepare capabilities
+      Capabilities caps = new DesiredCapabilities();
+      caps.setJavascriptEnabled(true);                //< not really needed: JS enabled by default
+      caps.setCapability("takesScreenshot", true);    //< yeah, GhostDriver haz screenshotz!
+      caps.setCapability(
+          PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY,
+          "/path/to/your/phantomjs/binary/greater/than/1.7"
+      );
+
+      // Launch driver (will take care and ownership of the phantomjs process)
+      WebDriver driver = new PhantomJSDriver(caps);
+	      
+	  } else {
 
 			FirefoxProfile profile = new FirefoxProfile();
 			
