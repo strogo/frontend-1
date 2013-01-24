@@ -28,30 +28,30 @@ public class FrontSteps {
 	
     @Given("^a section is hidden$")
     public void a_section_is_hidden() throws Throwable {
-      I_toggle_a_section("hide");
+        I_toggle_a_section("hide");
     }
 
     @When("^I (hide|show) a section$")
     public void I_toggle_a_section(String sectionState) throws Throwable {
-    		// wait for the toggle to become visible
-    		WebElement trailblockToggle = webDriver.waitForVisible(
-    		    By.xpath(sectionXpath + "//button[contains(@class, 'toggle-trailblock')]")
-    		);
-    		String expectedTrailblockHeight = (sectionState.equals("show")) ? "none" : "0";
-    		// only click if not in correct state
-    		String actualTrailblockHeight = webDriver.findElement(By.xpath(trailblockXpath)).getCssValue("max-height");
-    		if (actualTrailblockHeight != expectedTrailblockHeight) {
-    		  trailblockToggle.click();
-    		}
+        // wait for the toggle to become visible
+        WebElement trailblockToggle = webDriver.waitForVisible(
+            By.xpath(sectionXpath + "//button[contains(@class, 'toggle-trailblock')]")
+    	);
+    	String expectedTrailblockHeight = (sectionState.equals("show")) ? "none" : "0";
+    	// only click if not in correct state
+    	String actualTrailblockHeight = webDriver.findElement(By.xpath(trailblockXpath)).getCssValue("max-height");
+    	if (actualTrailblockHeight != expectedTrailblockHeight) {
+    	    trailblockToggle.click();
+    	}
   	}
 
   	@Then("^the section will be (hidden|shown)$")
   	public void the_section_will_be_toggled(String sectionState) throws Throwable {
-    		String expectedTrailblockHeight = (sectionState.equals("shown")) ? "none" : "0";
-    		// sections are hidden with css max-height
-    		Assert.assertTrue(webDriver.waitForCss(
-    		    By.xpath(trailblockXpath), "max-height", expectedTrailblockHeight)
-    		);
+    	String expectedTrailblockHeight = (sectionState.equals("shown")) ? "none" : "0";
+    	// sections are hidden with css max-height
+    	Assert.assertTrue(webDriver.waitForCss(
+	        By.xpath(trailblockXpath), "max-height", expectedTrailblockHeight)
+    	);
   	}
   	
     @Then("^the '([^']*)' section should have a '([^']*)' cta that loads in more top stories$")
