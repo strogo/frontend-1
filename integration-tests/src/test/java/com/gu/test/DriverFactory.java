@@ -20,7 +20,7 @@ public class DriverFactory {
 		
 		if (type.equals("htmlUnit")) {
 			
-			java.util.logging.Logger.getLogger("com.gargoylesoftware").setLevel(Level.OFF);
+			java.util.logging.Logger.getLogger("").setLevel(Level.OFF);
 			DesiredCapabilities capabilities = DesiredCapabilities.firefox();
 			capabilities.setJavascriptEnabled(true);
 			
