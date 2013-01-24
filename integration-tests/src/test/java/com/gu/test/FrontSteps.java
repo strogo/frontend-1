@@ -1,7 +1,5 @@
 package com.gu.test;
 
-import java.util.List;
-
 import junit.framework.Assert;
 
 import org.openqa.selenium.By;
