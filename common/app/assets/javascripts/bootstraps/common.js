@@ -121,12 +121,15 @@ define([
             if(config.switches.webFonts) {
                 showFonts = true;
             }
+            
             var fileFormat = detect.getFontFormatSupport(ua),
                 fontStyleNodes = document.querySelectorAll('[data-cache-name].initial');
+            
+            var f = new Fonts(fontStyleNodes, fileFormat);
             if (showFonts) {
-                new Fonts(fontStyleNodes, fileFormat).loadFromServerAndApply();
+                f.loadFromServerAndApply();
             } else {
-                Fonts.clearFontsFromStorage();
+                f.clearFontsFromStorage();
             }
         },
 
@@ -165,7 +168,6 @@ define([
 
         modules.transcludeRelated(config);
         modules.transcludeMostPopular(config.page.coreNavigationUrl, config.page.section, config.page.edition);
-
 
         modules.showRelativeDates();
     };
