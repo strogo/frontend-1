@@ -117,7 +117,7 @@ public class ArticleSteps {
 		Assert.assertTrue(webDriver.findElements(By.id("related-trails")).size() == 0);
 	}
 
-	@Then("^\"([^\"]*)\" section tab show read \"([^\"]*)\"$")
+	@Then("^\"([^\"]*)\" section tab should read \"([^\"]*)\"$")
 	public void section_tab_show_read(String arg1, String arg2) throws Throwable {
 		Assert.assertTrue(webDriver.isTextPresentByElement(By.className("tabs-selected"), arg2));
 	}

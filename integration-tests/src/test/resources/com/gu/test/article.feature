@@ -13,10 +13,10 @@ Feature: Article page
 	Scenario: Article has no story package
 	    Given I am on an article without a story package
         Then "Related content" is displayed
-	
+
 	Scenario: Most read
 		When I open a "sport" article
-		Then "most read" section tab show read "sport"
+		Then "most read" section tab should read "sport"
 
 	Scenario: Most read (per section)
 		Given I am on an article
