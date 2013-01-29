@@ -1,4 +1,5 @@
 @(live: pa.FootballMatch)
+@import implicits.Football._
 
 <li class="match live-match">
     <a href="@MatchUrl(live)" data-link-name="stats" data-match-id="@live.id">
@@ -11,6 +12,6 @@
         <p class="match-status type-12">
             <abbr class="match-@MatchStatus(live.matchStatus)">@MatchStatus(live.matchStatus)</abbr>
         </p>
-        @live.comments.map{ comment => <p class="match-comment type-6a"><span>@comment</span></p> }
+        @live.comments.map{ comment => <p class="match-comment type-10"><span>@comment</span></p> }
     </a>
 </li>

@@ -10,16 +10,19 @@ trait ApiQueryDefaults { self: Api =>
   val supportedTypes = "type/gallery|type/article|type/video"
 
   //NOTE - do NOT add body to this list
-  val trailFields = "headline,trail-text,liveBloggingNow,thumbnail,showInRelatedContent"
+  val trailFields = "headline,trail-text,liveBloggingNow,thumbnail,showInRelatedContent,wordcount"
 
   val references = "pa-football-competition,pa-football-team"
+
+  //todo change to 'picture,embed' once embeds are live in content api
+  val inlineElements = "picture"
 
   //common fileds that we use across most queries.
   def item(id: String, edition: String): ItemQuery = item.itemId(id)
     .edition(edition)
     .showTags("all")
     .showFields(trailFields)
-    .showInlineElements("picture")
+    .showInlineElements(inlineElements)
     .showMedia("all")
     .showReferences(references)
     .showStoryPackage(true)
@@ -29,7 +32,7 @@ trait ApiQueryDefaults { self: Api =>
   def search(edition: String): SearchQuery = search
     .edition(edition)
     .showTags("all")
-    .showInlineElements("picture")
+    .showInlineElements(inlineElements)
     .showReferences(references)
     .showFields(trailFields)
     .showMedia("all")

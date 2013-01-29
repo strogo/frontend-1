@@ -1,47 +1,49 @@
 define(['common', 'reqwest', 'bonzo'], function (common, reqwest, bonzo) {
 
     function TopStories() {
-        
+
         // View
-        
+
         this.view = {
-        
+
             render: function (html) {
 
                 var topstoriesHeader = document.getElementById('topstories-header'),
                     topstoriesNav = common.$g('.topstories-control');
 
-                topstoriesHeader.innerHTML = html;
+                topstoriesHeader.innerHTML = '<div class="headline-list box-indent" data-link-name="top-stories">'
+                    + html
+                    + '</div>';
 
                 common.mediator.emit('modules:topstories:render');
-                
+
                 common.mediator.on('modules:control:change:topstories-control-header:true', function(args) {
-                    bonzo(topstoriesHeader).removeClass('initially-off');
+                    bonzo(topstoriesHeader).removeClass('is-off');
                 });
-                
+
                 common.mediator.on('modules:control:change', function(args) {
-                    
+
                     var control = args[0],
                         state = args[1];
-                    
+
                     if (state === false || control !== 'topstories-control-header') {
-                        bonzo(topstoriesHeader).addClass('initially-off');
+                        bonzo(topstoriesHeader).addClass('is-off');
                     }
 
                 });
 
             }
-        
+
         };
 
         // Bindings
-        
+
         common.mediator.on('modules:topstories:loaded', this.view.render);
-        
+
         // Model
-        
+
         this.load = function (config) {
-            var url = config.page.coreNavigationUrl + '/top-stories?page-size=10';
+            var url = config.page.coreNavigationUrl + '/top-stories.json?page-size=10&view=link';
             return reqwest({
                     url: url,
                     type: 'jsonp',
@@ -54,7 +56,7 @@ define(['common', 'reqwest', 'bonzo'], function (common, reqwest, bonzo) {
         };
 
     }
-    
+
     return TopStories;
 
 });
