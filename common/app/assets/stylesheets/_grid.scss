@@ -49,25 +49,6 @@ $gridWidthPad : ($gridTopPad + $gridBotPad) * $ratio;
     height: $gridHeight * 4;
 }
 
-/*
-$from: $gridWidth * 12;
-@media only screen and (min-width : $from) {
-    #container {
-        width:  $from;
-    }
-    #header {
-        margin: $gridTopPad $gridWidthPad/2 $gridBotPad $gridWidthPad/2;
-    }
-    section {
-        -webkit-box-sizing: border-box;
-        box-sizing: border-box;
-        padding: $gridTopPad $gridWidthPad/2 $gridBotPad $gridWidthPad/2;
-        width: $gridWidth * 4;
-        float: left;
-    }
-}
-*/
-
 $from: $gridWidth * $gridColMin * 2;
 @media only screen and (min-width : $from) {
     .grid-col {

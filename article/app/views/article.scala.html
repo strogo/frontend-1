@@ -6,7 +6,7 @@
     	<a class="zone-color" data-link-name="article section" href="/@article.section">@Html(article.sectionName)</a>
 	</h2>
 
-    <article id="article" class="article @if(article.isLive){is-live} grid-col grid-col-greedy grid-col-1-2 grid-col-2-3 grid-col-2-4 grid-col-3-5 grid-col-3-6"
+    <article id="article" class="article @if(article.isLive){is-live} grid-col grid-col-greedy grid-col-1-2 grid-col-1-3 grid-col-1-4"
         itemprop="mainContentOfPage" itemscope itemtype="@article.schemaType" role="main">
 
         <header class="article-head">
@@ -43,7 +43,7 @@
     </article>
 
     
-    <div class="grid-col grid-col-1-2 grid-col-1-3 grid-col-2-4 grid-col-2-5 grid-col-3-6">
+    <div class="grid-col grid-col-1-2 grid-col-1-3 grid-col-3-4">
         @if(storyPackage.nonEmpty) {
             @fragments.relatedTrails(storyPackage, heading = "Related content", visibleTrails = 5)
         }
