@@ -1,10 +1,10 @@
 //Output based on body font-size being 10px
 @mixin font($family, $weight, $size, $line-height) {
     font-family: $family;
-    font-size: $size*1px;
-    font-size: ($size / 10)*1rem;
+    font-size: $size + 0px;
+    font-size: ($size / $fontsize)*1rem;
     font-weight: $weight;
-    line-height: ($line-height / 10)*1rem;
+    line-height: $line-height * $baseHeight;
 }
 
 @mixin box-sizing($box) {

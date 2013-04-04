@@ -1,14 +1,13 @@
 /* ====== media (nicole sullivan's OOCSS) ====== */
 
 .media, .media-body {
-    overflow: hidden; 
+    _overflow: hidden; 
     _overflow: visible; 
     zoom: 1;
 }
 
 .media-img {
-    float: left; 
-    margin-right: 15px;
+    float: left;
 }
 
 .media-img img {

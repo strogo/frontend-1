@@ -1,12 +1,13 @@
 @charset "UTF-8";
 
 //Variables and mixins
+@import "_grid";
 @import "_vars";
 @import "_mixins";
 
 //External components
-@import "_normalize";
-@import "responsive-grid";
+//@import "_normalize";
+//@import "responsive-grid";
 
 //Base
 @import "base/_type";

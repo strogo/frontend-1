@@ -1,12 +1,6 @@
 #container {
     clear: both;
-    max-width: 1024px;
-
-  @media (min-width: 40.0625em) {
-        padding-bottom: 10%;
-        width: 90%;
-        margin: 0 auto;
-  }
+    margin: 0 auto;
 }
 
 .component {

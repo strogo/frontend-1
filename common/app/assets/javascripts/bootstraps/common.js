@@ -27,7 +27,8 @@ define([
     'modules/cookies',
     'modules/search',
     'modules/analytics/omnitureMedia',
-    'modules/debug'
+    'modules/debug',
+    'modules/grid'
 ], function (
     common,
     ajax,
@@ -56,7 +57,8 @@ define([
     Cookies,
     Search,
     Video,
-    Debug
+    Debug,
+    Grid
 ) {
 
     var modules = {
@@ -197,6 +199,10 @@ define([
             Cookies.cleanUp(["mmcore.pd", "mmcore.srv", "mmid"]);
         },
 
+        applyGrid: function(config){
+            var grid = new Grid();
+        },
+
         initialiseSearch: function(config) {
             var s = new Search(config);
             common.mediator.on('modules:control:change:sections-control-header:true', function(args) {
@@ -210,6 +216,7 @@ define([
         modules.initialiseAjax(config);
         modules.attachGlobalErrorHandler(config);
         modules.loadFonts(config, navigator.userAgent);
+        modules.applyGrid(config);
         modules.upgradeImages();
         modules.showTabs();
 

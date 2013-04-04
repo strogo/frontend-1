@@ -1,12 +1,12 @@
 .ad-slot {
+    clear: both;
     display: block;
     width: 100%;
     padding: 0;
     text-align: center;
     min-height: 70px;
-    background-color: #f8f8f2;
     //For expandables
-    position: relative;
+    position: relative; // commented out to fix the grid
     z-index: 1000;
 
     @media screen and (min-width: 50.625em) {
