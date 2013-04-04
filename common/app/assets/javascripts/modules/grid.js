@@ -20,7 +20,6 @@ define([], function () {
                     h = childrenHeight % vUnit;
                     h = h ? childrenHeight + vUnit - h : childrenHeight;
                     if (h !== parseInt(el.style.height, 10)) {
-                        window.console.log(h + " " + parseInt(el.style.height, 10));
                         el.setAttribute("style","height:" + h + "px");
                     }
                 }
