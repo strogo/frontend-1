@@ -8,10 +8,9 @@ define(['common', 'modules/lazyload'], function (common, lazyLoad) {
             lazyLoad({
                 url: url,
                 container: container,
-                jsonpCallbackName: 'showMostPopular',
-                success: function () {
-                    common.mediator.emit('modules:popular:loaded', container);
-                }
+                jsonpCallbackName: 'showMostPopular'
+            }).then(function() {
+                common.mediator.emit('modules:popular:loaded', container);
             });
         }
     }

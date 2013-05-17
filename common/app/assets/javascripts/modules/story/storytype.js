@@ -29,15 +29,13 @@ define([
                 url: url,
                 type: "jsonp",
                 jsonpCallback: 'callback',
-                jsonpCallbackName: 'storycontent',
-                success: function(data) {
-                    if(data && data.html) {
-                        that.types[config.type](data.html);
-                    }
-                },
-                error: function () {
-                    common.mediator.emit('module:error', 'Failed to load story content', 'storytype.js');
+                jsonpCallbackName: 'storycontent'
+            }).then(function(data) {
+                if(data && data.html) {
+                    that.types[config.type](data.html);
                 }
+            }, function() {
+                common.mediator.emit('module:error', 'Failed to load story content', 'storytype.js');
             });
         };
 

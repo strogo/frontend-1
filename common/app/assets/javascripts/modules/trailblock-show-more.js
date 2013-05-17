@@ -87,28 +87,27 @@ define(['common', 'ajax', 'bonzo', 'bean', 'qwery'], function (common, ajax, bon
                     ajax({
                         url: opts.url || '/' +  section + '/trails',
                         type: 'jsonp',
-                        jsonpCallbackName: opts.jsonpCallbackName,
-                        success: function (resp) {
-                            common.mediator.emit('module:trailblock-show-more:loaded');
-                            var $trailList = bonzo(bonzo.create(resp.html)),
-                                $trails = common.$g('li', $trailList),
-                                numTrails = common.$g('.trail', $cta.previous()).length;
-                            // store trails
-                            trails[section] = [];
-                            // de-dupe
-                            $trails.each(function(trail) {
-                                // get the href for this trail
-                                var href = common.$g('h2 a', trail).attr('href');
-                                // only add if we don't already have this trail (based on href)
-                                if (common.$g('.trail h2 a[href="' + href + '"]', $cta.previous()).length === 0) {
-                                    // correct omniture count
-                                    common.$g('h2 a', trail).attr('data-link-name', ++numTrails);
-                                    trails[section].push(trail);
-                                }
-                            });
-                            
-                            that.view.render($cta, section);
-                        }
+                        jsonpCallbackName: opts.jsonpCallbackName
+                    }).then(function(resp) {
+                        common.mediator.emit('module:trailblock-show-more:loaded');
+                        var $trailList = bonzo(bonzo.create(resp.html)),
+                            $trails = common.$g('li', $trailList),
+                            numTrails = common.$g('.trail', $cta.previous()).length;
+                        // store trails
+                        trails[section] = [];
+                        // de-dupe
+                        $trails.each(function(trail) {
+                            // get the href for this trail
+                            var href = common.$g('h2 a', trail).attr('href');
+                            // only add if we don't already have this trail (based on href)
+                            if (common.$g('.trail h2 a[href="' + href + '"]', $cta.previous()).length === 0) {
+                                // correct omniture count
+                                common.$g('h2 a', trail).attr('data-link-name', ++numTrails);
+                                trails[section].push(trail);
+                            }
+                        });
+                        
+                        that.view.render($cta, section);
                     });
                 }
                 

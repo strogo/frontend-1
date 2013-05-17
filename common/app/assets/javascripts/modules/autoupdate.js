@@ -103,19 +103,18 @@ define([
                 url: path,
                 type: 'jsonp',
                 jsonpCallback: 'callback',
-                jsonpCallbackName: 'autoUpdate',
-                success: function (response) {
-                    if (!response) {
-                        common.mediator.emit('module:error', 'Failed to load auto-update: ' + options.path, 'autoupdate.js');
-                        return;
-                    }
-                    if(response.refreshStatus === false) {
-                        that.off();
-                        that.view.destroy();
-                    } else {
-                        that.view.render(response);
-                        common.mediator.emit('modules:autoupdate:loaded', response);
-                    }
+                jsonpCallbackName: 'autoUpdate'
+            }).then(function (response) {
+                if (!response) {
+                    common.mediator.emit('module:error', 'Failed to load auto-update: ' + options.path, 'autoupdate.js');
+                    return;
+                }
+                if(response.refreshStatus === false) {
+                    that.off();
+                    that.view.destroy();
+                } else {
+                    that.view.render(response);
+                    common.mediator.emit('modules:autoupdate:loaded', response);
                 }
             });
         };

@@ -2,6 +2,7 @@ define(['common', 'modules/lazyload', 'modules/expandable'], function (common, l
 
     function related(config, context, url) {
         var container;
+        config.switches.relatedContent = true;
 
         if (config.page && config.page.hasStoryPackage) {
 
@@ -19,12 +20,12 @@ define(['common', 'modules/lazyload', 'modules/expandable'], function (common, l
                 lazyLoad({
                     url: url || '/related/' + config.page.pageId,
                     container: container,
-                    jsonpCallbackName: 'showRelated',
-                    success: function () {
-                        new Expandable({dom: container.querySelector('.related-trails'), expanded: false, showCount: false}).init();
-                        common.mediator.emit('modules:related:loaded', config, context);
-                    }
+                   jsonpCallbackName: 'showRelated',
+                }).then(function () {
+                    new Expandable({dom: container.querySelector('.related-trails'), expanded: false, showCount: false}).init();
+                    common.mediator.emit('modules:related:loaded', config, context);
                 });
+
             }
         }
 

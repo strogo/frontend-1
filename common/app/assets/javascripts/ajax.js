@@ -1,4 +1,4 @@
-define(["reqwest"], function (reqwest) {
+define(["reqwest", "when"], function (reqwest, when) {
 
     var makeAbsolute = function () {
         throw new Error("AJAX has not been initialised yet");
@@ -16,12 +16,23 @@ define(["reqwest"], function (reqwest) {
 
     function ajax(params) {
 
-        params = appendEdition(params);
+        var deferred = when.defer();
 
+        params.success = function() {
+            deferred.resolve.apply(this, arguments);
+        }
+        params.error = function() {
+            deferred.reject.apply(this, arguments);
+        }
+
+        params = appendEdition(params);
         if(params.url.lastIndexOf("http://", 0)!==0){
             params.url = makeAbsolute(params.url);
         }
-        return ajax.reqwest(params);
+
+        ajax.reqwest(params);
+
+        return deferred.promise;
     }
 
     ajax.reqwest = reqwest; // expose publicly so we can inspect it in unit tests

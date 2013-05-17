@@ -23,12 +23,10 @@ define(['common', 'ajax', 'bonzo', 'modules/lazyload'], function (common, ajax, 
                             '<div class="headline-list headline-list--top box-indent" data-link-name="top-stories">' +
                                 html +
                             '</div>';
-                    },
-                    success: function (json) {
-                        common.mediator.emit('modules:topstories:loaded');
                     }
+                }).then(function () {
+                    common.mediator.emit('modules:topstories:loaded');
                 });
-
             }
         };
 

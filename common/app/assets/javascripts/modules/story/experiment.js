@@ -89,13 +89,12 @@ define([
                 url: url,
                 type: 'jsonp',
                 jsonpCallback: 'callback',
-                jsonpCallbackName: 'showExperiment',
-                success: function (json) {
-                    if (json && json.title && json.block) {
-                        that.view.render(json);
-                    } else {
-                        that.view.fallback();
-                    }
+                jsonpCallbackName: 'showExperiment'
+            }).then(function(json) {
+                if (json && json.title && json.block) {
+                    that.view.render(json);
+                } else {
+                    that.view.fallback();
                 }
             });
         };

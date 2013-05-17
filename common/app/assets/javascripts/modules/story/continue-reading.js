@@ -40,28 +40,27 @@ define(['common', 'ajax', 'bean', 'bonzo'], function (common, ajax, bean, bonzo)
                         ajax({
                             url: href + '.json',
                             type: 'jsonp',
-                            jsonpCallback: 'callback',
-                            success: function(resp) {
-                                // skip first n paras
-                                var skip = parseInt($el.attr('data-skip-paras'), 10) + 1,
-                                    // assuming the link is in a 'p'
-                                    $p = bonzo($el.parent()),
-                                    $content = bonzo(bonzo.create(resp.html))[1],
-                                    children = $content.querySelectorAll('.article-body > *');
-                                // only skip <p>s
-                                for (var i = 0; i < children.length; i++) {
-                                    if (children[i].nodeName.toLowerCase() === 'p') {
-                                        skip--;
-                                    }
-                                    if (skip === 0) {
-                                        $story = bonzo([].slice.call(children, i));
-                                        break;
-                                    }
+                            jsonpCallback: 'callback'
+                        }).then(function(resp) {
+                            // skip first n paras
+                            var skip = parseInt($el.attr('data-skip-paras'), 10) + 1,
+                                // assuming the link is in a 'p'
+                                $p = bonzo($el.parent()),
+                                $content = bonzo(bonzo.create(resp.html))[1],
+                                children = $content.querySelectorAll('.article-body > *');
+                            // only skip <p>s
+                            for (var i = 0; i < children.length; i++) {
+                                if (children[i].nodeName.toLowerCase() === 'p') {
+                                    skip--;
                                 }
-                                
-                                bonzo($p.previous()).append($story);
-                                toggleStory();
+                                if (skip === 0) {
+                                    $story = bonzo([].slice.call(children, i));
+                                    break;
+                                }
                             }
+                            
+                            bonzo($p.previous()).append($story);
+                            toggleStory();
                         });
                     }
                 }

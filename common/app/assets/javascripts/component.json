@@ -5,6 +5,7 @@
     "bean": "1.0",
     "bonzo": "1.3",
     "curl": "0.7",
+    "when": "git://github.com/cujojs/when.git",
     "domready": "*",
     "dom-write": "git://github.com/guardian/dom-write",
     "eventEmitter": "4.0",

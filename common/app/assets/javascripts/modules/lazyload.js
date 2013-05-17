@@ -1,4 +1,4 @@
-define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
+define(['common', 'ajax', 'bonzo', 'when'], function (common, ajax, bonzo, when) {
 
     var lazyLoad = function(opts) {
 
@@ -13,6 +13,8 @@ define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
             force             - boolean, default false. Reload an already-populated container
         */
 
+        var deferred = when.defer();
+
         var into;
 
         opts = opts || {};
@@ -21,21 +23,25 @@ define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
         if (opts.url && opts.container) {
             into = bonzo(opts.container);
             if (opts.force || ! into.hasClass('lazyloaded')) {
-                return ajax({
+
+                ajax({
                     url: opts.url,
                     type: 'jsonp',
-                    jsonpCallbackName: opts.jsonpCallbackName,
-                    success: function (json) {
-                        into.html(opts.beforeInsert(json.html));
-                        into.addClass('lazyloaded');
-                        if (typeof opts.success === 'function') {
-                            opts.success();
-                        }
-                    }
+                    jsonpCallbackName: opts.jsonpCallbackName
+                }).then(function(json) {
+                    into.html(opts.beforeInsert(json.html));
+                    into.addClass('lazyloaded');
+                    deferred.resolve();
+                }, function() {
+                    deferred.reject();
                 });
+
+            } else {
+                deferred.resolve();
             }
         }
 
+        return deferred.promise;
     };
 
     return lazyLoad;

@@ -21,16 +21,14 @@ define(['common', 'ajax', 'bonzo'], function (common, ajax, bonzo) {
                 url: query,
                 type: 'jsonp',
                 jsonpCallback: 'callback',
-                jsonpCallbackName: 'footballtables',
-                success: function (response) {
-                    //This is because the endpoint can also return a 204 no-content
-                    if(response) {
-                       that.view.render(response.html);
-                    }
-                },
-                error: function () {
-                    common.mediator.emit("modules:error", 'Failed to load football table', 'footballtables.js');
+                jsonpCallbackName: 'footballtables'
+            }).then(function(response) {
+                //This is because the endpoint can also return a 204 no-content
+                if(response) {
+                   that.view.render(response.html);
                 }
+            }, function() {
+                common.mediator.emit("modules:error", 'Failed to load football table', 'footballtables.js');
             });
         };
 

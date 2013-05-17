@@ -81,14 +81,15 @@ define([
 
         ajax({
             url: oasUrl,
-            type: 'jsonp',
-            success: function (js) {
+            type: 'jsonp'
+        }).then(
+            function (js) {
                 common.mediator.emit('modules:adverts:docwrite:loaded');
             },
-            error: function () {
+            function () {
                 common.mediator.emit('module:error', 'Failed to load adverts', 'document-write.js');
             }
-        });
+        );
     }
 
     return {

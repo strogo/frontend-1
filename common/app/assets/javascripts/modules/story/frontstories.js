@@ -84,11 +84,10 @@ define([
                 url: url,
                 type: 'jsonp',
                 jsonpCallback: 'callback',
-                jsonpCallbackName: 'showStoryTrails',
-                success: function (json) {
-                    if (json) {
-                        self.view.render(json);
-                    }
+                jsonpCallbackName: 'showStoryTrails'
+            }).then(function(json) {
+                if (json) {
+                    self.view.render(json);
                 }
             });
         };

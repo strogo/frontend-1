@@ -28,8 +28,9 @@ define(['ajax', 'common', 'modules/storage'], function (ajax, common, storage) {
                     this.ajax({
                         url: url + style.getAttribute('data-cache-file-' + fileFormat),
                         type: 'jsonp',
-                        jsonpCallbackName: 'guFont',
-                        success: (function (style) {
+                        jsonpCallbackName: 'guFont'
+                    }).then(
+                        (function (style) {
                             return function (json) {
                                 if (!json) {
                                     common.mediator.emit('module:error', 'Failed to load fonts', 'fonts.js');
@@ -46,7 +47,7 @@ define(['ajax', 'common', 'modules/storage'], function (ajax, common, storage) {
                                 common.mediator.emit('modules:fonts:loaded', [json.name]);
                             };
                         }(style))
-                    });
+                    );
                 } else {
                     common.mediator.emit('modules:fonts:notloaded', []);
                 }

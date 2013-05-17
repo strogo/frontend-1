@@ -55,16 +55,14 @@ define([
                 url: path,
                 type: 'jsonp',
                 jsonpCallback: 'callback',
-                jsonpCallbackName: 'footballfixtures',
-                success: function (response) {
-                    //This is because the endpoint can also return a 204 no-content
-                    if(response) {
-                       that.view.render(response.html);
-                    }
-                },
-                error: function () {
-                    common.mediator.emit("modules:error", 'Failed to load football fixtures', 'footballfixtures.js');
+                jsonpCallbackName: 'footballfixtures'
+            }).then(function(response) {
+                //This is because the endpoint can also return a 204 no-content
+                if(response) {
+                   that.view.render(response.html);
                 }
+            }, function() {
+                common.mediator.emit("modules:error", 'Failed to load football fixtures', 'footballfixtures.js');
             });
         };
 

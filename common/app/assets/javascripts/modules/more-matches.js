@@ -27,23 +27,22 @@ define(['common', 'ajax', 'bonzo', 'bean'], function (common, ajax, bonzo, bean)
                     url: link.attr('href'),
                     type: 'jsonp',
                     jsonpCallback: 'callback',
-                    jsonpCallbackName: 'moreMatches',
-                    success: function (response) {
-                        if (!response) {
-                            common.mediator.emit('module:error', 'Failed to load more matches', 'more-matches.js');
-                            return;
-                        }
-                        // pull out fixtures
-                        var $response = bonzo.create('<div>' + response.html + '</div>'),
-                            $fixtures = common.$g('.matches-container > .competitions-date, .matches-container > .competitions', $response[0]);
-                        // place html before nav
-                        bonzo(nav).before($fixtures);
-                        // update more link (if there is more)
-                        if (response.more) {
-                            link.attr('href', response.more);
-                        } else {
-                            link.remove();
-                        }
+                    jsonpCallbackName: 'moreMatches'
+                }).then(function(response) {
+                    if (!response) {
+                        common.mediator.emit('module:error', 'Failed to load more matches', 'more-matches.js');
+                        return;
+                    }
+                    // pull out fixtures
+                    var $response = bonzo.create('<div>' + response.html + '</div>'),
+                        $fixtures = common.$g('.matches-container > .competitions-date, .matches-container > .competitions', $response[0]);
+                    // place html before nav
+                    bonzo(nav).before($fixtures);
+                    // update more link (if there is more)
+                    if (response.more) {
+                        link.attr('href', response.more);
+                    } else {
+                        link.remove();
                     }
                 });
             }

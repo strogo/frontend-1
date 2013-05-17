@@ -122,23 +122,22 @@ define([
                     url: url,
                     method: 'get',
                     type: 'jsonp',
-                    jsonpCallbackName: 'swipePreload',
-                    success: function (frag) {
-                        var html;
+                    jsonpCallbackName: 'swipePreload'
+                }).then(function(frag) {
+                    var html;
 
-                        delete el.pending;
-                        frag   = frag || {};
-                        html   = frag.html || '<div class="preload-msg">Oops. This page might be broken?</div>';
+                    delete el.pending;
+                    frag   = frag || {};
+                    html   = frag.html || '<div class="preload-msg">Oops. This page might be broken?</div>';
 
-                        sequenceCache[url] = sequenceCache[url] || {};
-                        sequenceCache[url].html = html;
-                        sequenceCache[url].config = frag.config || {};
+                    sequenceCache[url] = sequenceCache[url] || {};
+                    sequenceCache[url].html = html;
+                    sequenceCache[url].config = frag.config || {};
 
-                        if (el.dataset.url === url) {
-                            populate(el, html);
-                            common.mediator.emit('module:swipenav:pane:loaded', el);
-                            callback();
-                        }
+                    if (el.dataset.url === url) {
+                        populate(el, html);
+                        common.mediator.emit('module:swipenav:pane:loaded', el);
+                        callback();
                     }
                 });
             }
@@ -230,11 +229,10 @@ define([
         var section = window.location.pathname.match(/^\/[^\/]+/);
         ajax({
             url: '/front-trails' + (section ? section[0] : ''),
-            type: 'jsonp',
-            success: function (json) {
-                if (json.stories && json.stories.length >= 3) {
-                    callback(json.stories);
-                }
+            type: 'jsonp'
+        }).then(function(json) {
+            if (json.stories && json.stories.length >= 3) {
+                callback(json.stories);
             }
         });
     }
