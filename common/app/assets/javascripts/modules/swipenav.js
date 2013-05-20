@@ -33,10 +33,7 @@ define([
         pendingHTML = '<div class="preload-msg">Loading page...<div class="is-updating"></div></div>',
         referrer,
         referrerPageName,
-        sequencePos = -1,
-        sequence = [],
-        sequenceCache,
-        sequenceLen = 0,
+        sequence,
         swipeContainer = '#preloads',
         swipeContainerEl = document.querySelector(swipeContainer),
         throttle,
@@ -68,19 +65,6 @@ define([
         return mod(x, 3);
     }
 
-    function loadSequence(callback) {
-        var section = window.location.pathname.match(/^\/[^\/]+/);
-        ajax({
-            url: '/front-trails' + (section ? section[0] : ''),
-            type: 'jsonp',
-            success: function (json) {
-                if (json.stories && json.stories.length >= 3) {
-                    callback(json.stories);
-                }
-            }
-        });
-    }
-
     function prepareDOM() {
         var pages = document.querySelector('#preloads'),
             page0 = pages.querySelector('#preload-0 .parts'),
@@ -104,6 +88,74 @@ define([
         bonzo(page2).append(foot.cloneNode(true));
     }
 
+    function Sequence() {
+
+        this.pos = -1;
+        this.sequence = [];
+        this.cache = {};
+        this.len = 0;
+
+        this.load = function(callback) {
+            var section = window.location.pathname.match(/^\/[^\/]+/);
+            ajax({
+                url: '/front-trails' + (section ? section[0] : ''),
+                type: 'jsonp',
+                success: function (json) {
+                    if (json.stories && json.stories.length >= 3) {
+                        this.set(json.stories);
+                        callback();
+                    }
+                }
+            });
+        };
+
+        this.setPosByUrl = function(url) {
+            this.pos = this.getPosByUrl(url);
+        };
+
+        this.getPosByUrl = function(url) {
+            url = this.cache[url];
+            return url ? url.pos : -1;
+        };
+
+        this.getUrlByPos = function(pos) {
+            return pos > -1 && pos < this.len ? this.sequence[pos].url : this.sequence[0].url;
+        };
+
+        this.set = function(arr) {
+            var len = arr.length,
+                url = window.location.pathname,
+                s,
+                i;
+
+            if (len) {
+
+                // Make sure current url is the first in the sequence
+                if(arr[0].url !== url) {
+                    arr.unshift({url: url});
+                    len += 1;
+                }
+
+                this.sequence = [];
+                this.len = 0;
+                this.cache = {};
+
+                for (i = 0; i < len; i += 1) {
+                    s = arr[i];
+                    // dedupe, while also creating a lookup obj
+                    if(!this.cache[s.url]) {
+                        s.pos = i;
+                        this.cache[s.url] = s;
+                        this.sequence.push(s);
+                        this.len += 1;
+                        //window.console.log(i + " " + s.url);
+                    }
+                }
+                this.setPosByUrl(url);
+            }
+        };
+    }
+
     function load(o) {
         var
             url = o.url,
@@ -120,7 +172,7 @@ define([
             el.bodyPart.innerHTML = pendingHTML;
 
             // Ask the cache
-            frag = sequenceCache[url];
+            frag = sequence.cache[url];
 
             // Is cached ?
             if (frag && frag.html) {
@@ -142,9 +194,9 @@ define([
                         frag   = frag || {};
                         html   = frag.html || '<div class="preload-msg">Oops. This page might be broken?</div>';
 
-                        sequenceCache[url] = sequenceCache[url] || {};
-                        sequenceCache[url].html = html;
-                        sequenceCache[url].config = frag.config || {};
+                        sequence.cache[url] = sequence.cache[url] || {};
+                        sequence.cache[url].html = html;
+                        sequence.cache[url].config = frag.config || {};
 
                         if (el.dataset.url === url) {
                             populate(el, html);
@@ -183,9 +235,9 @@ define([
         }
 
         url = context.dataset.url;
-        setSequencePos(url);
+        sequence.setPosByUrl(url);
 
-        config = (sequenceCache[url] || {}).config || {};
+        config = (sequence.cache[url] || {}).config || {};
 
         if (config.page && config.page.webTitle) {
             div = document.createElement('div');
@@ -212,9 +264,8 @@ define([
         referrer = window.location.href;
         referrerPageName = config.page.analyticsName;
 
-        if(clickSelector && initiatedBy === 'click') {
-            loadSequence(function(sequence){
-                setSequence(sequence);
+        if(initiatedBy === 'click') {
+            sequence.load(function(){
                 loadSidePanes();
             });
         } else {
@@ -223,55 +274,10 @@ define([
 
     }
 
-    function setSequencePos(url) {
-        sequencePos = getSequencePos(url);
-    }
-
-    function getSequencePos(url) {
-        url = sequenceCache[url];
-        return url ? url.pos : -1;
-    }
-
-    function getSequenceUrl(pos) {
-        return pos > -1 && pos < sequenceLen ? sequence[pos].url : sequence[0].url;
-    }
-
-    function setSequence(arr, url) {
-        var len = arr.length,
-            s,
-            i;
-
-        if (len) {
-
-            // Make sure url is the first in the sequence
-            if(url && arr[0].url !== url) {
-                arr.unshift({url: url});
-                len += 1;
-            }
-
-            sequence = [];
-            sequenceLen = 0;
-            sequenceCache = {};
-
-            for (i = 0; i < len; i += 1) {
-                s = arr[i];
-                // dedupe, while also creating a lookup obj
-                if(!sequenceCache[s.url]) {
-                    s.pos = i;
-                    sequenceCache[s.url] = s;
-                    sequence.push(s);
-                    sequenceLen += 1;
-                    //window.console.log(i + " " + s.url);
-                }
-            }
-            setSequencePos(url);
-        }
-    }
-
     function gotoUrl(url, dir) {
-        var pos = getSequencePos(url);
+        var pos = sequence.getPosByUrl(url);
         if (typeof dir === 'undefined') {
-            dir = pos > -1 && pos < sequencePos ? -1 : 1;
+            dir = pos > -1 && pos < sequence.pos ? -1 : 1;
         }
         preparePane({
             url: url,
@@ -285,13 +291,13 @@ define([
         // dir = -1  => the left pane
 
         if (dir === 0) {
-            return getSequenceUrl(sequencePos);
+            return sequence.getUrlByPos(sequence.pos);
         }
-        else if (sequencePos > -1) {
-            return getSequenceUrl(mod(sequencePos + dir, sequenceLen));
+        else if (sequence.pos > -1) {
+            return sequence.getUrlByPos(mod(sequence.pos + dir, sequence.len));
         }
         else{
-            return getSequenceUrl((dir === 1 ? 1 : 0), sequenceLen);
+            return sequence.getUrlByPos((dir === 1 ? 1 : 0), sequence.len);
         }
     }
 
@@ -319,10 +325,10 @@ define([
 
     function gotoSequencePage(pos) {
         var dir;
-        if (pos !== sequencePos && pos < sequenceLen) {
-            dir = pos < sequencePos ? -1 : 1;
-            sequencePos = pos;
-            gotoUrl(getSequenceUrl(pos), dir);
+        if (pos !== sequence.pos && pos < sequence.len) {
+            dir = pos < sequence.pos ? -1 : 1;
+            sequence.pos = pos;
+            gotoUrl(sequence.getUrlByPos(pos), dir);
         }
     }
 
@@ -403,7 +409,7 @@ define([
 
     // This'll be the public api
     var api = {
-        setSequence: setSequence,
+        setSequence: sequence.set,
 
         loadSidePanes: loadSidePanes,
 
@@ -539,16 +545,19 @@ define([
     }
 
     var initialise = function(config) {
-        loadSequence(function(sequence){
-            var loc = window.location.href;
+        var loc = window.location.href;
 
-            initialUrl       = urlAbsPath(loc);
-            referrer         = loc;
-            referrerPageName = config.page.analyticsName;
-            body             = $('body');
-            canonicalLink    = $('link[rel=canonical]');
-            contentAreaTop   = $(swipeContainerEl).offset().top;
-            visiblePane      = $('#preloads-inner > #preload-1', swipeContainerEl)[0];
+        initialUrl = urlAbsPath(loc);
+        referrer         = loc;
+        referrerPageName = config.page.analyticsName;
+        body             = $('body');
+        canonicalLink    = $('link[rel=canonical]');
+        contentAreaTop   = $(swipeContainerEl).offset().top;
+        visiblePane      = $('#preloads-inner > #preload-1', swipeContainerEl)[0];
+
+        sequence = new Sequence();
+
+        sequence.load(function(){
 
             if (config.switches.swipeNavOnClick || userPrefs.isOn('swipe-nav-on-click')) {
                 clickSelector = 'a:not(.control)';
@@ -557,17 +566,12 @@ define([
             // Set up the DOM structure
             prepareDOM();
 
-            // Set the initial sequence
-            setSequence(sequence, initialUrl);
-
             // Cache the config of the initial page, in case the 2nd swipe is backwards to this page.
-            if (sequenceCache[initialUrl]) {
-                sequenceCache[initialUrl].config = config;
+            if (sequence.cache[initialUrl]) {
+                sequence.cache[initialUrl].config = config;
             }
 
             start();
-
-            return api;
         });
     };
 
