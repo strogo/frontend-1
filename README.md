@@ -11,8 +11,35 @@ Frontend is a set of Play Framework 2 Scala applications.
 Requirements
 ------------
 
-    * A Mac or Linux pc
-    * Installed Node.js (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
+* A Mac or Linux pc
+* Installed Node.js (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
+* Installed npm (Node package manager - you quite possibly already have this) `sudo apt-get install npm`
+* Installed GraphicsMagick
+* Installed Grunt (build tool) `sudo npm -g install grunt-cli`
+* Installed Ruby >= v1.9.x & [bundler](http://gembundler.com/) (You will already have this installed, but run `ruby -v` to check version number)
+
+File handles
+------------
+
+On Linux machines you may run into a "too many files open" error during compilation or reloading. You can find out
+how many file handles you are allowed per process by running `ulimit -n`. This can be quite low, e.g. 1024
+
+To increase the limit do the following (instructions from Ubuntu 12.10)...
+
+In the file `/etc/security/limits.conf` add the following two lines
+```
+*  soft  nofile 20000
+*  hard  nofile 65000
+```
+
+And in the file `/etc/pam.d/common-session` add the following line.
+```
+session required pam_limits.so
+```
+
+restart the machine.
+
+For more info see http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/
 
 Configuration
 -------------
@@ -33,14 +60,21 @@ content.api.host=http://XXXX
 pa.api.key=XXXX
 ```
 
-Get the correct key and host from another developer on the project.
+Get the correct key and host from another developer on the project (or for external developers, sign up for a key at http://guardian.mashery.com).
+
+To set up a proxy
+
+```
+export proxy_host=proxy.somewhere.com
+export proxy_port=1234
+```
 
 Running
 -------
 
 Assuming you have checked out this project, open a console and change directory into the root of the project.
 
-Start Simple Build Tool (sbt) by running `./sbt011 --no-proxy`
+Start Simple Build Tool (sbt) by running `./sbt012 --no-proxy`
 
 Once sbt is running (it may take a while first time) then compile the project by typing `compile` (also can take a while first time)
 
@@ -90,7 +124,7 @@ Deployment uses the [Magenta][magenta] library.
 
 No Proxy Build
 --------------
-Invoke `sbt011` with a `--no-proxy` parameter to directly download artifacts.
+Invoke `sbt012` with a `--no-proxy` parameter to directly download artifacts.
 
 
 Additional Documentation
@@ -105,3 +139,8 @@ Further documentation notes and useful items can be found in `dev`.
 [sbt-idea]: https://github.com/mpeltonen/sbt-idea
 [vagrant]: http://vagrantup.com
 [magenta]: https://github.com/guardian/deploy
+
+
+
+
+

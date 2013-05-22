@@ -5,22 +5,27 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
         var config = {};
 
         var w = {
-        	performance: { timing: { requestStart: 1, responseStart: 5000 } },
+        	performance: { timing: { requestStart: 1, responseEnd: 5000 } },
         	innerWidth: 500
         }
 
         beforeEach(function(){
 
-            config.page = { omnitureAccount: 'the_account', analyticsName: 'the_page_name' }
+            config.page = { omnitureAccount: 'the_account', analyticsName: 'the_page_name' };
+            config.switches = {};
 
-            s = { t: function(){}, tl: function(){} };
+            s = { t: function(){}, tl: function(){}, apl: function(){} };
             sinon.spy(s, "t");
             sinon.spy(s, "tl");
+            sinon.spy(s, "apl");
+        });
 
+        afterEach(function(){
+            localStorage.removeItem('gu.analytics.referrerVars')
         });
 
         it("should correctly set the Omniture account", function(){
-            var o = new Omniture(s, config).init();
+            var o = new Omniture(s).go(config);
             expect(s_account).toBe("the_account");
         });
 
@@ -29,14 +34,14 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
             config.page.contentType = 'Article';
             s.pageType = 'article';
 
-            var o = new Omniture(s, config)
-            o.init();
+            var o = new Omniture(s);
+            o.go(config);
             o.populateEventProperties('outer:link');
 
             expect(s.linkTrackVars).toBe('eVar37,events');
             expect(s.linkTrackEvents).toBe('event37');
             expect(s.events).toBe('event37');
-            expect(s.eVar37).toBe("article:outer:link");
+            expect(s.eVar37).toBe("Article:outer:link");
 
         });
 
@@ -60,8 +65,8 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
                     analyticsName: "GFE:theworld:a-really-long-title-a-really-long-title-a-really-long-title-a-really-long"
             };
 
-            var o = new Omniture(s, config, w);
-            o.populatePageProperties();
+            var o = new Omniture(s, w);
+            o.go(config);
 
             expect(s.linkInternalFilters).toBe("guardian.co.uk,guardiannews.co.uk,localhost,gucode.co.uk,gucode.com,guardiannews.com,int.gnl,proxylocal.com");
             expect(s.pageName).toBe("GFE:theworld:a-really-long-title-a-really-long-title-a-really-long-title-a-really-long");
@@ -75,7 +80,7 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
             expect(s.prop25).toBe("Middle East Live");
             expect(s.prop14).toBe("build-73");
             expect(s.prop47).toBe("US");
-            expect(s.prop48).toBe("low");
+            expect(s.prop68).toBe("low");
             expect(s.prop56).toBe("Javascript");
             expect(s.prop30).toBe("content");
             expect(s.prop19).toBe("frontend");
@@ -91,14 +96,14 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
                 edition: "NOT-US"
             };
 
-            var o = new Omniture(s, config, w);
-            o.populatePageProperties();
+            var o = new Omniture(s, w);
+            o.go(config);
 
             expect(s.cookieDomainPeriods).toBe("3")
         });
 
         it("should log a page view event", function() {
-            var o = new Omniture(s, config).init();
+            var o = new Omniture(s).go(config);
             waits(100);
             runs(function() {
                 expect(s.t).toHaveBeenCalledOnce();
@@ -107,29 +112,75 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
 
         it("should log a clickstream event", function() {
 
-            var o = new Omniture(s, config)
-            o.init();
+            var o = new Omniture(s),
+                clickSpec = {
+                    target: document.documentElement,
+                    samePage: true,
+                    sameHost: true,
+                    tag: 'something'
+                };
+
+            o.go(config);
             waits(100);
             runs(function() {
-                common.mediator.emit('module:clickstream:click', ['tag', false, false]);
+                common.mediator.emit('module:clickstream:click', clickSpec);
                 expect(s.tl).toHaveBeenCalledOnce();
             });
         });
 
-        it("should not introduce an artificial delay for same-page links or same-host links", function(){
+        it("should make a non-delayed s.tl call for same-page links", function(){
 
-            var o = new Omniture(s, config),
-                el = document.createElement("a");
+            var o = new Omniture(s),
+                el = document.createElement("a"),
+                clickSpecSamePage = {
+                    target: el,
+                    samePage: true,
+                    sameHost: true,
+                    tag: 'tag'
+                };
 
-            o.init();
-            waits(100);
+            o.go(config);
             runs(function() {
-                common.mediator.emit('module:clickstream:click', [el, 'tag', true, true]);   // same-page  (non-delayed s.tl call)
-                common.mediator.emit('module:clickstream:click', [el, 'tag', false, false]); // other-host (delayed s.tl call)
-                /* Uncomment when Omnitute have implemented localStorage for same-host clicks: */
-                //common.mediator.emit('module:clickstream:click', [el, 'tag', false, true]);  // same-host  (no s.tl call; use session storage)
-                expect(s.tl.withArgs(el, 'o', 'tag')).toHaveBeenCalledOnce();
+                common.mediator.emit('module:clickstream:click', clickSpecSamePage);  // same page  (non-delayed s.tl call)
                 expect(s.tl.withArgs(true, 'o', 'tag')).toHaveBeenCalledOnce();
+            });
+
+        });
+
+        it("should use local storage for same-host links", function(){
+
+            var o = new Omniture(s),
+                el = document.createElement("a"),
+                clickSpec = {
+                    target: el,
+                    samePage: false,
+                    sameHost: true,
+                    tag: 'tag in localstorage'
+                };
+
+            o.go(config);
+            runs(function() {
+                common.mediator.emit('module:clickstream:click', clickSpec);
+                expect(JSON.parse(localStorage.getItem('gu.analytics.referrerVars').replace('|object', '')).tag).toEqual('tag in localstorage')
+            });
+
+        });
+
+        it("should make a delayed s.tl call for other-host links", function(){
+
+            var o = new Omniture(s),
+                el = document.createElement("a"),
+                clickSpec = {
+                    target: el,
+                    samePage: false,
+                    sameHost: false,
+                    tag: 'tag'
+                };
+
+            o.go(config);
+            runs(function() {
+                common.mediator.emit('module:clickstream:click', clickSpec);
+                expect(s.tl.withArgs(el,   'o', 'tag')).toHaveBeenCalledOnce();
             });
 
         });

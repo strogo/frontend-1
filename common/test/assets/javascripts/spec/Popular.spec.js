@@ -1,30 +1,34 @@
-define(['common', 'modules/popular'], function(common, Popular) {
+define(['common', 'ajax', 'modules/popular'], function(common, ajax, popular) {
 
     describe("Popular", function() {
        
-        var callback;
+        var popularLoadedCallback;
 
         beforeEach(function() {
-            callback = sinon.spy(function(){});
-            common.mediator.on('modules:popular:loaded', callback);
+            ajax.init({page: {
+                ajaxUrl: "",
+                edition: "UK"
+            }});
+            popularLoadedCallback = sinon.stub();
+            common.mediator.on('modules:popular:loaded', popularLoadedCallback);
         });
 
         // json test needs to be run asynchronously 
         it("should request the most popular feed and graft it on to the dom", function(){
             
-            appendTo = document.getElementById('popular-1');
+            appendTo = document.querySelector('.js-popular');
             
             runs(function() {
-                var r = new Popular(appendTo).load('fixtures/popular');
+                popular({}, document, 'fixtures/popular');
             });
 
             waits(500);
 
             runs(function(){
-                expect(callback).toHaveBeenCalledOnce();
+                expect(popularLoadedCallback).toHaveBeenCalledOnce();
                 expect(appendTo.innerHTML).toBe('<b>popular</b>');
             });
         });
     
     });
-})
+});

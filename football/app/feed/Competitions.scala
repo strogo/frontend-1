@@ -4,15 +4,22 @@ import common.{ Logging, AkkaSupport }
 import akka.actor.Cancellable
 import org.joda.time.{ DateTime, DateTimeComparator, DateMidnight }
 import conf.FootballClient
-import akka.util.Duration
-import java.util.concurrent.TimeUnit._
 import model.Competition
 import model.TeamFixture
 import scala.Some
 import java.util.Comparator
 import org.scala_tools.time.Imports._
-import pa.{ MatchDayTeam, FootballTeam, FootballMatch }
+import pa._
 import implicits.Football
+import common._
+
+
+import scala.concurrent.duration.{Duration => Timed, _}
+import pa.MatchDayTeam
+import pa.MatchDay
+import scala.Some
+import model.Competition
+import model.TeamFixture
 
 trait CompetitionSupport extends Football {
 
@@ -60,7 +67,7 @@ trait CompetitionSupport extends Football {
 
   def previousMatchDates(date: DateMidnight, numDays: Int) = matchDates.reverse.filter(_ <= date).take(numDays)
 
-  def findMatch(id: String): Option[FootballMatch] = competitions.flatMap(_.matches.find(_.id == id)).headOption
+  def findMatch(id: String): Option[FootballMatch] = matches.find(_.id == id)
 
   def withTeamMatches(teamId: String) = competitions.filter(_.hasMatches).flatMap(c =>
     c.matches.filter(m => m.homeTeam.id == teamId || m.awayTeam.id == teamId).sortBy(_.date.getMillis).map { m =>
@@ -129,6 +136,8 @@ trait Competitions extends CompetitionSupport with AkkaSupport with Logging with
 
     CompetitionAgent(Competition("701", "/football/world-cup-2014-qualifiers", "World Cup 2014 qualifiers", "World Cup 2014 qualifiers", "Internationals")),
 
+    CompetitionAgent(Competition("721", "/football/friendlies", "International friendlies", "Friendlies", "Internationals")),
+
     CompetitionAgent(Competition("650", "/football/laligafootball", "La Liga", "La Liga", "European", showInTeamsList = true)),
 
     CompetitionAgent(Competition("620", "/football/ligue1football", "Ligue 1", "Ligue 1", "European", showInTeamsList = true)),
@@ -158,50 +167,46 @@ trait Competitions extends CompetitionSupport with AkkaSupport with Logging with
   }
 
   //one http call updates all competitions
-  def refreshCompetitionData() = FootballClient.competitions.foreach { season =>
+  def refreshCompetitionData() = FootballClient.competitions.map(_.flatMap{ season =>
     log.info("Refreshing competition data")
-    competitionAgents.find(_.competition.id == season.id).foreach { agent =>
-      agent.update(agent.competition.copy(startDate = Some(season.startDate)))
+    competitionAgents.find(_.competition.id == season.id).map { agent =>
+      val newCompetition = agent.competition.copy(startDate = Some(season.startDate))
+      agent.update(newCompetition)
     }
-  }
+  })
 
   //one http call updates all competitions
-  def refreshMatchDay() {
-    val todaysMatches = FootballClient.matchDay(DateMidnight.now).filter(m => m.isLive || m.isResult)
+  def refreshMatchDay() = FootballClient.matchDay(DateMidnight.now).map{ todaysMatches: List[MatchDay] =>
+
     val liveMatches = todaysMatches.filter(_.isLive)
     val results = todaysMatches.filter(_.isResult)
-    competitionAgents.foreach { agent =>
-
-      //update the live matches of the competition
-      val competitionLiveMatches = liveMatches.filter(_.competition.exists(_.id == agent.competition.id))
-      log.info("found %s live matches for competition %s".format(competitionLiveMatches.size, agent.competition.fullName))
-      agent.updateLiveMatches(competitionLiveMatches)
+    competitionAgents.map { agent =>
 
       //update the results of the competition
       val competitionResults = results.filter(_.competition.exists(_.id == agent.competition.id))
       agent.addResultsFromMatchDay(competitionResults)
+
+      //update the live matches of the competition
+      val competitionLiveMatches = liveMatches.filter(_.competition.exists(_.id == agent.competition.id))
+      log.info(s"found ${competitionLiveMatches.size} live matches for competition ${agent.competition.fullName}")
+      agent.updateLiveMatches(competitionLiveMatches)
     }
   }
 
   def startup() {
     import play_akka.scheduler._
-    schedules = every(Duration(10, SECONDS), initialDelay = Duration(1, SECONDS)) { refreshMatchDay() } ::
-      every(Duration(5, MINUTES), initialDelay = Duration(1, SECONDS)) { refreshCompetitionData() } ::
+    schedules = every(Timed(10, SECONDS), initialDelay = Timed(1, SECONDS)) { refreshMatchDay() } ::
+      every(Timed(5, MINUTES), initialDelay = Timed(1, SECONDS)) { refreshCompetitionData() } ::
       competitionAgents.zipWithIndex.toList.map {
         case (agent, index) =>
           //stagger fixtures and results refreshes to avoid timeouts
-          every(Duration(5, MINUTES), initialDelay = Duration(5 + index, SECONDS)) { agent.refresh() }
+          every(Timed(5, MINUTES), initialDelay = Timed(5 + index, SECONDS)) { agent.refresh() }
       }
   }
 
   def shutDown() {
     schedules.foreach(_.cancel())
     competitionAgents.foreach(_.shutdown())
-  }
-
-  //used to add test data
-  def setMatches(competitionId: String, matches: Seq[FootballMatch]) {
-    competitionAgents.find(_.competition.id == competitionId).foreach(_.setMatches(matches))
   }
 }
 

@@ -1,7 +1,9 @@
 package model
 
 import com.gu.openplatform.contentapi.model.{ Tag => ApiTag }
+import java.net.URI
 import common.Reference
+import views.support.{Contributor, ImgSrc}
 
 case class Tag(private val delegate: ApiTag) extends MetaData {
   lazy val name: String = webTitle
@@ -18,7 +20,7 @@ case class Tag(private val delegate: ApiTag) extends MetaData {
   lazy val linkText: String = webTitle
   lazy val pageId = delegate
 
-  lazy val contributorImageUrl: Option[String] = delegate.bylineImageUrl
+  lazy val contributorImagePath: Option[String] = delegate.bylineImageUrl.map(ImgSrc(_, Contributor))
 
   lazy val isContributor: Boolean = id.startsWith("profile/")
   lazy val bio: String = delegate.bio.getOrElse("")
@@ -35,7 +37,7 @@ case class Tag(private val delegate: ApiTag) extends MetaData {
 
   lazy val tagWithoutSection = id.split("/")(1) // used for football nav
 
-  override lazy val analyticsName = "GFE:" + section + ":" + name
+  override lazy val analyticsName = s"GFE:$section:$name"
 
   override lazy val metaData: Map[String, Any] = super.metaData ++ Map(
     "keywords" -> name,

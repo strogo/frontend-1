@@ -5,11 +5,11 @@ define(['analytics/omniture', 'common'], function(Omniture, common) {
         var config = {};
 
         beforeEach(function(){
-            config.page = { omnitureAccount: 'the_account' }
+            config.page = { omnitureAccount: 'the_account' };
         });
 
         it("should load the omniture 's' object", function(){
-            var o = new Omniture(null, config).init();
+            var o = new Omniture().go(config);
             waits(100); 
             runs(function() {
                 expect(s_d).toBeDefined();

@@ -1,16 +1,19 @@
 package com.gu.test;
 
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.logging.Level;
-
+import org.openqa.selenium.Proxy;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriverService;
+import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
+
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.util.logging.Level;
 
 public class DriverFactory {
 	
@@ -25,7 +28,7 @@ public class DriverFactory {
 			capabilities.setJavascriptEnabled(true);
 			
 			driver = new HtmlUnitDriver(capabilities);
-			
+
 		} else if (type.equals("phantomJS")) {
 	      
 			// prepare capabilities
@@ -37,8 +40,23 @@ public class DriverFactory {
 	
 			// Launch driver (will take care and ownership of the phantomjs process)
 			driver = new PhantomJSDriver(caps);
-	      
-	  } else {
+
+		}
+        else if (type.equals("chrome")){
+            if (!httpProxy.isEmpty()){
+                Proxy proxy = new Proxy();
+            proxy.setHttpProxy(httpProxy);
+                DesiredCapabilities dc = DesiredCapabilities.chrome();
+                dc.setCapability(CapabilityType.PROXY,proxy);
+                driver = new ChromeDriver(dc);
+            }
+            else{
+            driver = new ChromeDriver();
+            }
+            return driver;
+
+        }
+        else {
 
 			FirefoxProfile profile = new FirefoxProfile();
 			

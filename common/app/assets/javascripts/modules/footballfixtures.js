@@ -2,7 +2,17 @@
     Module: footballfixtures.js
     Description: Used to load a list of football fixtures of a given competition and append to DOM
 */
-define(['common', 'reqwest', 'bonzo'], function (common, Reqwest, bonzo) {
+define([
+    'common',
+    'ajax',
+    'bonzo',
+    'modules/expandable'
+], function (
+    common,
+    ajax,
+    bonzo,
+    Expandable
+) {
     /*
         @param {Object} options hash of configuration options:
             prependTo   : {DOMElement}  DOM element to prepend component to
@@ -12,7 +22,6 @@ define(['common', 'reqwest', 'bonzo'], function (common, Reqwest, bonzo) {
             numVisible  : {Number}  Number of items to show when contracted
     */
     function FootballFixtures(options) {
-        var reqwest = Reqwest;
 
         //Full list of competitions from CM, in priority order.
         //Mappings can be found here: http://cms.guprod.gnl/tools/mappings/pafootballtournament
@@ -24,8 +33,16 @@ define(['common', 'reqwest', 'bonzo'], function (common, Reqwest, bonzo) {
         // View
         this.view = {
             render: function (html) {
-                var el = bonzo(options.prependTo).after(html);
+                bonzo(options.prependTo).after(html);
                 common.mediator.emit('modules:footballfixtures:render');
+                if(options.expandable) {
+                    var expandable = new Expandable({
+                        dom: 'front-competition-fixtures',
+                        expanded: false
+                    });
+                    expandable.init();
+                    common.mediator.emit('modules:footballfixtures:expand');
+                }
             }
         };
         
@@ -34,7 +51,7 @@ define(['common', 'reqwest', 'bonzo'], function (common, Reqwest, bonzo) {
             var path = query,
                 that = this;
 
-            return reqwest({
+            return ajax({
                 url: path,
                 type: 'jsonp',
                 jsonpCallback: 'callback',
@@ -50,13 +67,6 @@ define(['common', 'reqwest', 'bonzo'], function (common, Reqwest, bonzo) {
                 }
             });
         };
-
-        // Bindings
-        common.mediator.on('modules:footballfixtures:render', function() {
-            if(options.expandable) {
-                common.mediator.emit('modules:footballfixtures:expand', 'front-competition-fixtures');
-            }
-        }, this);
 
         this.generateQuery = function() {
             var query = this.queryString,
@@ -77,7 +87,7 @@ define(['common', 'reqwest', 'bonzo'], function (common, Reqwest, bonzo) {
         //Initalise
         this.init = function(opts) {
             opts = opts || {};
-            reqwest = opts.reqwest || Reqwest; //For unit testing
+            ajax = opts.ajax || ajax; //For unit testing
 
             var query = (options.path) ? options.path : this.generateQuery();
 

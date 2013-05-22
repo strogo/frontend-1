@@ -17,6 +17,8 @@ import play.api.mvc.RequestHeader
 import org.joda.time.{ DateTimeZone, DateTime }
 import org.joda.time.format.DateTimeFormat
 import conf.Configuration
+import com.gu.openplatform.contentapi.model.MediaAsset
+import play.Play
 
 sealed trait Style {
   val className: String
@@ -37,9 +39,15 @@ object Headline extends Style { val className = "headline-only" }
 object MetadataJson {
 
   def apply(data: (String, Any)): String = data match {
-    case (key, value: Map[String, Any]) => "'%s': {%s}".format(key, value.map(MetadataJson(_)).mkString(","))
-    case (key, value: Seq[(String, Any)]) => "'%s': [%s]".format(key, value.map("{" + MetadataJson(_) + "}").mkString(","))
-    case (key, value) => "'%s': %s".format(JavaScriptVariableName(key), JavaScriptValue(value))
+    // thank you erasure
+    case (key, value) if value.isInstanceOf[Map[_, _]] =>
+      val valueJson = value.asInstanceOf[Map[String, Any]].map(MetadataJson(_)).mkString(",")
+      s""""$key": {$valueJson}"""
+    case (key, value) if value.isInstanceOf[Seq[_]] =>
+      val valueJson = value.asInstanceOf[Seq[(String, Any)]].map(v => s"{${MetadataJson(v)}}").mkString(",")
+      s""""$key": [${valueJson}]""".format(key, valueJson)
+    case (key, value) =>
+      s""""${JavaScriptVariableName(key)}": ${JavaScriptValue(value)}"""
   }
 }
 
@@ -72,14 +80,14 @@ object SafeName {
 object JavaScriptValue {
   def apply(value: Any) = value match {
     case b: Boolean => b
-    case s => "'" + s.toString.replace("'", "\\'") + "'"
+    case s => s""""${s.toString.replace(""""""", """\\"""")}""""
   }
 }
 
 object JavaScriptVariableName {
   def apply(s: String): String = {
     val parts = s.split("-").toList
-    (parts.headOption.toList ::: parts.tail.map { firstLetterUppercase }) mkString
+    (parts.headOption.toList ::: parts.tail.map(firstLetterUppercase )).mkString
   }
   private def firstLetterUppercase(s: String) = s.head.toUpper + s.tail
 }
@@ -89,8 +97,8 @@ case class RowInfo(rowNum: Int, isLast: Boolean = false) {
   lazy val isEven = rowNum % 2 == 0
   lazy val isOdd = !isEven
   lazy val rowClass = rowNum match {
-    case 1 => "first " + _rowClass
-    case _ if isLast => "last " + _rowClass
+    case 1 => s"first ${_rowClass}"
+    case _ if isLast => s"last ${_rowClass}"
     case _ => _rowClass
   }
   private lazy val _rowClass = if (isEven) "even" else "odd"
@@ -115,7 +123,7 @@ object BlockNumberCleaner extends HtmlCleaner {
       val blockComments = element.childNodes.flatMap { node =>
         node.toString.trim match {
           case Block(num) =>
-            Option(node.nextSibling).foreach(_.attr("id", "block-" + num))
+            Option(node.nextSibling).foreach(_.attr("id", s"block-$num"))
             Some(node)
           case _ => None
         }
@@ -130,22 +138,43 @@ case class PictureCleaner(imageHolder: Images) extends HtmlCleaner with implicit
 
   def clean(body: Document): Document = {
     body.getElementsByTag("figure").foreach { fig =>
-      fig.attr("itemprop", "associatedMedia")
-      fig.attr("itemscope", "")
-      fig.attr("itemtype", "http://schema.org/ImageObject")
+      if(!fig.hasClass("element-comment")) {
+        fig.attr("itemprop", "associatedMedia")
+        fig.attr("itemscope", "")
+        fig.attr("itemtype", "http://schema.org/ImageObject")
 
-      fig.getElementsByTag("img").foreach { img =>
-        img.attr("itemprop", "contentURL")
-        Option(img.attr("width")).filter(_.isInt) foreach { width =>
-          fig.attr("class", width.toInt match {
-            case width if width <= 220 => "img-base inline-image"
-            case width if width < 460 => "img-median inline-image"
-            case width => "img-extended"
-          })
+        fig.getElementsByTag("img").foreach { img =>
+          img.attr("itemprop", "contentURL")
+          val src = img.attr("src")
+          img.attr("src", ImgSrc(src, Naked))
+          Option(img.attr("width")).filter(_.isInt) foreach { width =>
+            fig.attr("class", width.toInt match {
+              case width if width <= 220 => "img-base inline-image"
+              case width if width < 460 => "img-median inline-image"
+              case width => "img-extended"
+            })
+          }
+        }
+
+        fig.getElementsByTag("figcaption").foreach(_.attr("itemprop", "description"))
+      }
+    }
+    body
+  }
+}
+
+case class VideoPosterCleaner(videos: Seq[MediaAsset]) extends HtmlCleaner {
+
+  def clean(body: Document): Document = {
+    body.getElementsByTag("video").filter(_.hasClass("gu-video")).foreach { videoTag =>
+      videoTag.getElementsByTag("source").headOption.foreach{ source =>
+        val file = source.attr("src")
+        videos.find(_.encodings.exists(_.file == file)).foreach{ video =>
+          video.fields.getOrElse(Map.empty).get("stillImageUrl").foreach{ poster =>
+            videoTag.attr("poster", poster)
+          }
         }
       }
-
-      fig.getElementsByTag("figcaption").foreach(_.attr("itemprop", "description"))
     }
     body
   }
@@ -172,15 +201,25 @@ object TweetCleaner extends HtmlCleaner {
   override def clean(document: Document): Document = {
     document.getElementsByClass("twitter-tweet").foreach { element =>
       val el = element.clone()
-      val body = el.child(0).attr("class", "tweet-body")
-      val date = el.child(1).attr("class", "tweet-date")
-      val user = el.ownText()
-      val userEl = document.createElement("span").attr("class", "tweet-user").text(user)
+      if (el.children.size > 1) {
+        val body = el.child(0).attr("class", "tweet-body")
+        val date = el.child(1).attr("class", "tweet-date")
+        val user = el.ownText()
+        val userEl = document.createElement("span").attr("class", "tweet-user").text(user)
 
-      element.empty().attr("class", "tweet")
-      element.appendChild(userEl).appendChild(date).appendChild(body)
-
+        element.empty().attr("class", "tweet")
+        element.appendChild(userEl).appendChild(date).appendChild(body)
+      }
     }
+    document
+  }
+}
+
+case class Summary(ammount: Int) extends HtmlCleaner {
+  override def clean(document: Document): Document = {
+    val children = document.body().children().toList;
+    val para = children.filter(_.nodeName() == "p")(ammount)
+    children.drop(children.indexOf(para)).foreach(_.remove())
     document
   }
 }
@@ -193,10 +232,10 @@ object ContributorLinks {
     tags.foldLeft(text) {
       case (t, tag) =>
         t.replaceFirst(tag.name,
-          <span itemscope="" itemtype="http://schema.org/Person" itemprop="author"><a rel="author" itemprop="url name" data-link-name="auto tag link" href={ "/" + tag.id }>{ tag.name }</a></span>.toString)
+          <span itemscope="" itemtype="http://schema.org/Person" itemprop="author"><a rel="author" itemprop="url name" data-link-name="auto tag link" href={ s"/${tag.id}" }>{ tag.name }</a></span>.toString)
     }
   }
-  def apply(html: Html, tags: Seq[Tag]): Html = apply(html.text, tags)
+  def apply(html: Html, tags: Seq[Tag]): Html = apply(html.body, tags)
 }
 
 object OmnitureAnalyticsData {
@@ -216,32 +255,32 @@ object OmnitureAnalyticsData {
 
     val pageName = page.analyticsName
     val analyticsData = Map(
-      "g" -> path,
-      "ns" -> "guardian",
-      "pageName" -> pageName,
-      // cookieDomainPeriods http://www.scribd.com/doc/42029685/15/cookieDomainPeriods
-      "cdp" -> (if (Edition(request, Configuration) == "US") "2" else "3"),
-      "v7" -> pageName,
-      "c3" -> publication,
-      "ch" -> section,
-      "c9" -> section,
-      "c4" -> data.get("keywords").getOrElse(""),
-      "c6" -> data.get("author").getOrElse(""),
-      "c8" -> pageCode,
-      "v8" -> pageCode,
-      "c9" -> contentType,
-      "c10" -> data.get("tones").getOrElse(""),
-      "c11" -> section,
-      "c13" -> data.get("series").getOrElse(""),
-      "c25" -> data.get("blogs").getOrElse(""),
-      "c14" -> data("build-number"),
-      "c19" -> platform,
-      "v19" -> platform,
-      "c30" -> (if (isContent) "content" else "non-content"),
-      "c56" -> jsSupport
+      ("g", path),
+      ("ns", "guardian"),
+      ("pageName", pageName),
+      //TODO EDITIONS - temporary until we move to single domain
+      ("cdp", (if (Site(request).map(_.isUsEdition).getOrElse(false)) "2" else "3")),
+      ("v7", pageName),
+      ("c3", publication),
+      ("ch", section),
+      ("c9", section),
+      ("c4", data.get("keywords").getOrElse("")),
+      ("c6", data.get("author").getOrElse("")),
+      ("c8", pageCode),
+      ("v8", pageCode),
+      ("c9", contentType),
+      ("c10", data.get("tones").getOrElse("")),
+      ("c11", section),
+      ("c13", data.get("series").getOrElse("")),
+      ("c25", data.get("blogs").getOrElse("")),
+      ("c14", data("build-number")),
+      ("c19", platform),
+      ("v19", platform),
+      ("c30", (if (isContent) "content" else "non-content")),
+      ("c56", jsSupport)
     )
 
-    Html(analyticsData map { case (key, value) => key + "=" + encode(value, "UTF-8") } mkString ("&"))
+    Html(analyticsData map { case (key, value) => s"$key=${encode(value, "UTF-8")}" } mkString ("&"))
   }
 }
 
@@ -256,16 +295,16 @@ object `package` extends Formats {
     Html(cleanedHtml.body.html)
   }
 
-  implicit def tags2tagUtils(t: Tags) = new {
+  implicit class Tags2tagUtils(t: Tags) {
     def typeOrTone: Option[Tag] = t.types.find(_.id != "type/article").orElse(t.tones.headOption)
   }
 
-  implicit def tags2inflector(t: Tag) = new {
+  implicit class Tags2inflector(t: Tag) {
     lazy val singularName: String = inflector.singularize(t.name)
     lazy val pluralName: String = inflector.pluralize(t.name)
   }
 
-  implicit def seq2zipWithRowInfo[A](seq: Seq[A]) = new {
+  implicit class Seq2zipWithRowInfo[A](seq: Seq[A]) {
     def zipWithRowInfo = seq.zipWithIndex.map {
       case (item, index) => (item, RowInfo(index + 1, seq.length == index + 1))
     }
@@ -273,12 +312,9 @@ object `package` extends Formats {
 }
 
 object Format {
-  def apply(date: DateTime, pattern: String, edition: String = "UK"): String = {
-    val timezone = edition match {
-      case "US" => "America/New_York"
-      case _ => "Europe/London"
-    }
-    date.toString(DateTimeFormat.forPattern(pattern).withZone(DateTimeZone.forID(timezone)))
+  def apply(date: DateTime, pattern: String)(implicit request: RequestHeader): String = {
+    val timezone = Edition(request).timezone
+    date.toString(DateTimeFormat.forPattern(pattern).withZone(timezone))
   }
 }
 
@@ -290,4 +326,11 @@ object cleanTrailText {
 
 object StripHtmlTags {
   def apply(html: String): String = Jsoup.clean(html, Whitelist.none())
+}
+
+object Head {
+  def css = if (Play.isDev) volatileCss else persistantCss
+
+  private def volatileCss: String = io.Source.fromInputStream(getClass.getResourceAsStream("/public/stylesheets/head.min.css")).mkString
+  private lazy val persistantCss: String = volatileCss
 }

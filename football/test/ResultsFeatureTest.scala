@@ -10,89 +10,83 @@ class ResultsFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatch
 
     scenario("Visit the results page") {
 
-      given("I visit the results page")
+      Given("I visit the results page")
 
-      //the url /football/results is based on the current day
-      //this just checks it loads
       HtmlUnit("/football/results") { browser =>
         import browser._
-        findFirst("h1").getText should be("All results")
-      }
 
-      //A dated url will give us a fixed set of results we can assert against
-      HtmlUnit("/football/results/2012/oct/20") { browser =>
-        import browser._
+        Then("I should see todays live matches")
+        val matches = $(".match-desc").getTexts
+        matches should contain ("Arsenal 1-0 Spurs")
 
-        then("I should see results for today")
-
-        findFirst(".competitions-date").getText should be("Friday 19 October 2012")
-
-        val results = $(".matches").findFirst(".match-desc")
-        results.findFirst(".match-home").getText should be("Sheff Wed")
-        results.findFirst(".match-away").getText should be("Leeds")
-        findFirst(".match-status").getText should include("FT")
-
-        and("I should see results for previous days")
-        $(".competitions-date").getTexts should contain("Wednesday 17 October 2012")
-        $(".competitions-date").getTexts should contain("Tuesday 16 October 2012")
+        And("I should see results for previous days")
+        matches should contain ("Sunderland 1-1 West Ham")
+        matches should contain ("Wigan 1-1 Everton")
+        matches should contain ("Bolton 1-1 Derby")
+        matches should contain ("Fulham 0-0 Norwich")
       }
     }
 
     scenario("Next results") {
-      given("I am on the results page")
-      HtmlUnit("/football/results/2012/oct/20") { browser =>
+      Given("I am on the results page")
+      HtmlUnit("/football/results") { browser =>
         import browser._
 
-        then("I should see the 'previous'")
+        And("I click the 'previous' results link")
+        findFirst("[data-link-name=previous]").click()
 
-        findFirst("[data-link-name=previous]").getAttribute("href") should endWith("/football/results/2012/oct/15")
+        Then("I should see earlier results")
+        $(".match-desc").getTexts should contain ("Stoke 1-1 Villa")
       }
     }
 
     scenario("Competition results filter") {
 
-      given("I am on the the results page")
-      HtmlUnit("/football/results/2012/oct/20") { browser =>
+      Given("I am on the the results page")
+      HtmlUnit("/football/results") { browser =>
         import browser._
 
-        when("I click the filter to premier league link")
+        When("I click the filter to premier league link")
 
         findFirst("[data-link-name='Premier League']").click()
         browser.await()
 
-        then("I should navigate to the premier league results page")
-        find(".match-desc").map(_.getText) should contain("Spurs 2-4 Chelsea")
+        Then("I should navigate to the premier league results page")
+        $(".match-desc").getTexts should contain("Arsenal 1-0 Spurs")
+
+        And("I should not see other leagues results")
+        $(".match-desc").getTexts should not contain("Bolton 1-1 Derby")
       }
     }
 
     scenario("Link tracking") {
-      given("I visit the results page")
-      HtmlUnit("/football/results/2012/oct/20") { browser =>
+      Given("I visit the results page")
+      HtmlUnit("/football/results") { browser =>
         import browser._
-        then("any links I click should be tracked")
+        Then("any links I click should be tracked")
         $("a").filter(link => !Option(link.getAttribute("data-link-name")).isDefined).foreach { link =>
-          fail("Link with text %s has no data-link-name".format(link.getText))
+          fail(s"Link with text ${link.getText} has no data-link-name")
         }
       }
     }
 
     scenario("The 'Desktop version' link points to the correct, equivalent desktop page") {
 
-      given("I visit the results page")
-      and("I am on the 'UK' edition")
+      Given("I visit the results page")
+      And("I am on the 'UK' edition")
       HtmlUnit("/football/results") { browser =>
         import browser._
 
-        then("the 'Desktop version' link should point to 'http://www.guardian.co.uk/football/matches?mobile-redirect=false'")
+        Then("the 'Desktop version' link should point to 'http://www.guardian.co.uk/football/matches?mobile-redirect=false'")
         findFirst("#main-site").getAttribute("href") should be("http://www.guardian.co.uk/football/matches?mobile-redirect=false")
       }
 
-      given("I visit the results page")
-      and("I am on the 'US' edition")
+      Given("I visit the results page")
+      And("I am on the 'US' edition")
       HtmlUnit.US("/football/results") { browser =>
         import browser._
 
-        then("the 'Desktop version' link should point to 'http://www.guardiannews.com/football/matches?mobile-redirect=false'")
+        Then("the 'Desktop version' link should point to 'http://www.guardiannews.com/football/matches?mobile-redirect=false'")
         findFirst("#main-site").getAttribute("href") should be("http://www.guardiannews.com/football/matches?mobile-redirect=false")
       }
 

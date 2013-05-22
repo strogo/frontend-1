@@ -1,196 +1,257 @@
 define([
     //Commmon libraries
     'common',
-    'modules/detect',
+    'ajax',
     'modules/userPrefs',
     //Vendor libraries
     'domReady',
-    'qwery',
+    'bonzo',
     //Modules
+    'modules/storage',
+    'modules/detect',
+    'modules/popular',
+    'modules/related',
     'modules/router',
-    'modules/errors',
     'modules/images',
-    'modules/navigation/controls',
     'modules/navigation/top-stories',
     'modules/navigation/sections',
-    'modules/related',
-    'modules/popular',
-    'modules/expandable',
-    'modules/fonts',
+    'modules/navigation/search',
+    'modules/navigation/control',
+    'modules/navigation/australia',
+    'modules/navigation/edition-switch',
     'modules/tabs',
     'modules/relativedates',
     'modules/analytics/clickstream',
     'modules/analytics/omniture',
     'modules/adverts/adverts',
-    'modules/cookies'
+    'modules/cookies',
+    'modules/analytics/omnitureMedia',
+    'modules/debug',
+    'modules/experiments/ab',
+    'modules/swipenav'
 ], function (
     common,
-    detect,
+    ajax,
     userPrefs,
 
     domReady,
-    qwery,
+    bonzo,
 
+    storage,
+    detect,
+    popular,
+    related,
     Router,
-    Errors,
     Images,
-    Control,
     TopStories,
     Sections,
-    Related,
-    Popular,
-    Expandable,
-    Fonts,
+    Search,
+    NavControl,
+    Australia,
+    EditionSwitch,
     Tabs,
     RelativeDates,
     Clickstream,
     Omniture,
     Adverts,
-    Cookies
+    Cookies,
+    OmnitureMedia,
+    Debug,
+    AB,
+    swipeNav
 ) {
 
     var modules = {
 
-        attachGlobalErrorHandler: function () {
-            var e = new Errors(window);
-                e.init();
-            common.mediator.on("module:error", e.log);
-        },
-
         upgradeImages: function () {
-            new Images().upgrade();
+            var images = new Images();
+            common.mediator.on('page:common:ready', function(config, context) {
+                images.upgrade(context);
+            });
+            common.mediator.on('fragment:ready:images', function(context) {
+                images.upgrade(context);
+            });
         },
 
         initialiseNavigation: function (config) {
-           
-            // the section panel
-            new Sections().init();
+            var navControl = new NavControl();
+            var sections = new Sections();
+            var search = new Search(config);
+            var aus = new Australia(config); // TODO temporary till we have single domain editions
 
-            // the toolbar
-            var t = new Control({id: 'topstories-control-header'}),
-                s = new Control({id: 'sections-control-header'});
-
-            t.init();
-            s.init();
-
-            common.mediator.on('modules:topstories:render', function(args) {
-                t.show();
+            var editions = new EditionSwitch();
+            common.mediator.on('page:common:ready', function(config, context) {
+                navControl.init(context);
+                sections.init(context);
+                search.init(context);
+                aus.init(context);
             });
         },
 
-        transcludeTopStories: function (config) {
-            new TopStories().load(config);
+        transcludeTopStories: function () {
+            var topStories = new TopStories();
+            common.mediator.on('page:common:ready', function(config, context) {
+                topStories.load(config, context);
+            });
         },
 
-        transcludeRelated: function (config){
-
-          common.mediator.on("modules:related:load", function(url){
-
-              var hasStoryPackage = document.getElementById("related-trails") !== null;
-
-              var relatedExpandable = new Expandable({ id: 'related-trails', expanded: false });
-
-              if (hasStoryPackage) {
-                  relatedExpandable.init();
-              } else {
-                  common.mediator.on('modules:related:render', relatedExpandable.init);
-                  new Related(document.getElementById('js-related'), config.switches).load(url[0]);
-              }
-          });
+        transcludeRelated: function () {
+            common.mediator.on("page:common:ready", function(config, context){
+                related(config, context);
+            });
         },
 
-        transcludeMostPopular: function (host, section, edition) {
-            var url = host + '/most-popular' + (section ? '/' + section : ''),
-                domContainer = document.getElementById('js-popular');
-            
-            if (domContainer) {
-                new Popular(domContainer).load(url);
-                common.mediator.on('modules:popular:render', function() {
-                    common.mediator.emit('modules:tabs:render', '#js-popular-tabs');
-                });
-            }
-
+        transcludePopular: function () {
+            common.mediator.on('page:common:ready', function(config, context) {
+                popular(config, context);
+            });
         },
 
         showTabs: function() {
-            var t = new Tabs().init();
-        },
-
-        loadFonts: function(config, ua, prefs) {
-            var showFonts = false;
-            if(config.switches.webFonts) {
-                showFonts = true;
-            }
-            
-            var fileFormat = detect.getFontFormatSupport(ua),
-                fontStyleNodes = document.querySelectorAll('[data-cache-name].initial');
-            
-            var f = new Fonts(fontStyleNodes, fileFormat);
-            if (showFonts) {
-                f.loadFromServerAndApply();
-            } else {
-                f.clearFontsFromStorage();
-            }
-        },
-
-        showRelativeDates: function () {
-            RelativeDates.init();
-        },
-
-        loadOmnitureAnalytics: function (config) {
-            var cs = new Clickstream({ filter: ["a", "span", "button"] }),
-                o = new Omniture(null, config).init();
-        },
-
-        loadOphanAnalytics: function (config) {
-            require([config.page.ophanUrl], function (Ophan) {
-                Ophan.startLog();
+            var tabs = new Tabs();
+            common.mediator.on('modules:popular:loaded', function(el) {
+                tabs.init(el);
             });
         },
 
-        loadAdverts: function (config) {
-            Adverts.init(config);
+        showRelativeDates: function () {
+            var dates = RelativeDates;
+            common.mediator.on('page:common:ready', function(config, context) {
+                dates.init(context);
+            });
+            common.mediator.on('fragment:ready:dates', function(el) {
+                dates.init(el);
+            });
+        },
 
-            common.mediator.on('modules:adverts:docwrite:loaded', Adverts.loadAds);
+        loadAnalytics: function () {
+            var cs = new Clickstream({filter: ["a", "button"]}),
+                omniture = new Omniture();
+
+            common.mediator.on('page:common:deferred:loaded', function(config, context) {
+
+                // AB must execute before Omniture
+                AB.init(config, context);
+
+                omniture.go(config, function(){
+                    // callback:
+
+                    Array.prototype.forEach.call(context.getElementsByTagName("video"), function(video){
+                        if (!bonzo(video).hasClass('tracking-applied')) {
+                            bonzo(video).addClass('tracking-applied');
+                            var v = new OmnitureMedia({
+                                el: video,
+                                config: config
+                            }).init();
+                        }
+                    });
+                });
+
+                require(config.page.ophanUrl, function (Ophan) {
+
+                    if (!Ophan.isInitialised) {
+                        Ophan.isInitialised = true;
+                        Ophan.initLog();
+                    }
+
+                    Ophan.additionalViewData(function() {
+
+                        var viewData = {};
+
+                        var audsci = storage.get('gu.ads.audsci');
+                        if (audsci) {
+                            viewData.audsci_json = JSON.stringify(audsci);
+                        }
+
+                        if(AB.inTest(config.switches)) {
+                            var test = AB.getTest();
+                            viewData.experiments_json = JSON.stringify([{
+                                id: test.id,
+                                variant: test.variant
+                            }]);
+                        }
+
+                        return viewData;
+                    });
+
+                    Ophan.sendLog(config.swipe ? config.swipe.referrer : undefined);
+                });
+
+            });
+        },
+
+        loadAdverts: function () {
+            if (!userPrefs.isOff('adverts')){
+                common.mediator.on('page:common:deferred:loaded', function(config, context) {
+                    if (config.switches && config.switches.adverts) {
+                        Adverts.init(config, context);
+                    }
+                });
+                common.mediator.on('modules:adverts:docwrite:loaded', function(){
+                    Adverts.loadAds();
+                });
+            }
         },
 
         cleanupCookies: function() {
             Cookies.cleanUp(["mmcore.pd", "mmcore.srv", "mmid"]);
+        },
+
+        showSharedWisdomToolbar: function(config) {
+            // only display if switched on
+            if (userPrefs.isOn('shared-wisdom-toolbar')) {
+                require('modules/shared-wisdom-toolbar', function(sharedWisdomToolbar) {
+                    sharedWisdomToolbar.init(function() {
+                        sharedWisdomToolbar.show();
+                    }, config.modules.sharedWisdomToolbar);
+                });
+            }
+        },
+
+        initSwipe: function(config) {
+            if ((config.switches.swipeNav && detect.canSwipe() && !userPrefs.isOff('swipe-nav')) || userPrefs.isOn('swipe-nav')) {
+                swipeNav(config);
+            }
         }
     };
 
-    var ready = function(config) {
-        modules.attachGlobalErrorHandler();
-        modules.loadFonts(config, navigator.userAgent, userPrefs);
-        modules.upgradeImages();
-        modules.showTabs();
-
-        modules.initialiseNavigation(config);
-        modules.transcludeTopStories(config);
-
-        modules.transcludeRelated(config);
-        modules.transcludeMostPopular(config.page.coreNavigationUrl, config.page.section, config.page.edition);
-
-        modules.showRelativeDates();
-    };
-
-    // If you can wait for load event, do so.
-    var defer = function(config) {
+    var deferrable = function (config, context) {
+        var self = this;
         common.deferToLoadEvent(function() {
-            modules.loadOmnitureAnalytics(config);
-            modules.loadOphanAnalytics(config);
-            modules.loadAdverts(config);
-            modules.cleanupCookies();
+            if (!self.initialisedDeferred) {
+                self.initialisedDeferred = true;
+                modules.loadAdverts();
+                modules.loadAnalytics();
+
+                // TODO: make these run in event 'page:common:deferred:loaded'
+                modules.cleanupCookies(context);
+                modules.showSharedWisdomToolbar(config);
+            }
+            common.mediator.emit("page:common:deferred:loaded", config, context);
         });
     };
 
-    var init = function (config) {
-        ready(config, userPrefs);
-        defer(config);
+    var ready = function (config, context) {
+        if (!this.initialised) {
+            this.initialised = true;
+            modules.upgradeImages();
+            modules.showTabs();
+            modules.showRelativeDates();
+            modules.transcludeRelated();
+            modules.transcludePopular();
+            modules.transcludeTopStories();
+            modules.initialiseNavigation(config);
+            modules.initSwipe(config);
+        }
+        common.mediator.emit("page:common:ready", config, context);
+    };
+
+    var init = function (config, context) {
+        ready(config, context);
+        deferrable(config, context);
     };
 
     return {
         init: init
     };
-
 });

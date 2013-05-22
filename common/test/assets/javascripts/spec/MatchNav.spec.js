@@ -1,4 +1,4 @@
-define(['common', 'modules/matchnav', 'modules/pageconfig'], function(common, MatchNav, PageConfig) {
+define(['common', 'ajax', 'modules/matchnav', 'modules/pageconfig'], function(common, ajax, MatchNav, PageConfig) {
 
     var config = PageConfig({
         page: {
@@ -13,30 +13,29 @@ define(['common', 'modules/matchnav', 'modules/pageconfig'], function(common, Ma
         var callback;
 
         beforeEach(function() {
+            ajax.init({page: {
+                ajaxUrl: "",
+                edition: "UK"
+            }});
             callback = sinon.spy(function(){});
             common.mediator.on('modules:matchnav:loaded', callback);
         });
 
         // json test needs to be run asynchronously 
         it("should request the related links and graft them on to the dom", function(){
-            
 
             runs(function() {
-                var r = new MatchNav().load("fixtures/match-stats-nav");
+                new MatchNav().load("fixtures/match-stats-nav", document);
             });
 
             waits(500);
 
             runs(function(){
                 expect(callback).toHaveBeenCalledOnce();
-                expect(document.getElementById("js-related").innerHTML).toBe('2');
+                expect(document.querySelector(".js-related").innerHTML).toBe('2');
                 expect(document.querySelector('.after-header').innerHTML).toBe('1');
             });
         });
 
-        xit("should request the related links per edition", function(){
-            expect(0).toBeTruthy();
-        });
-    
     });
-})
+});

@@ -2,8 +2,11 @@ package common
 
 import com.gu.conf.ConfigurationFactory
 import com.gu.management.{ Manifest => ManifestFile }
+import java.net.InetAddress
+import play.api.Play
+import conf.CommonSwitches.ImageServerSwitch
 
-class BaseGuardianConfiguration(val application: String, val webappConfDirectory: String = "env") {
+class BaseGuardianConfiguration(val application: String, val webappConfDirectory: String = "env") extends Logging {
   protected val configuration = ConfigurationFactory.getConfiguration(application, webappConfDirectory)
 
   object switches {
@@ -42,13 +45,24 @@ class GuardianConfiguration(
     lazy val key = configuration.getStringProperty("content.api.key") getOrElse {
       throw new IllegalStateException("Content Api Key not configured")
     }
+
+    lazy val timeout: Int = configuration.getIntegerProperty("content.api.timeout.millis").getOrElse(2000)
+  }
+
+  object mongo {
+    lazy val connection = configuration.getStringProperty("mongo.connection.readonly.password").getOrElse(throw new RuntimeException("Mongo connection not configured"))
+  }
+
+  object host {
+    lazy val name = InetAddress.getLocalHost.getHostName
   }
 
   object proxy {
+
     lazy val isDefined: Boolean = hostOption.isDefined && portOption.isDefined
 
-    private lazy val hostOption = Option(System.getProperty("http.proxyHost"))
-    private lazy val portOption = Option(System.getProperty("http.proxyPort")) flatMap { _.toIntOption }
+    private lazy val hostOption = Option(System.getenv("proxy_host"))
+    private lazy val portOption = Option(System.getenv("proxy_port")) flatMap { _.toIntOption }
 
     lazy val host: String = hostOption getOrElse {
       throw new IllegalStateException("HTTP proxy host not configured")
@@ -59,24 +73,26 @@ class GuardianConfiguration(
     }
   }
 
+  object ajax {
+    lazy val url = configuration.getStringProperty("ajax.url").getOrElse("")
+  }
+
   object static {
     lazy val path = configuration.getStringProperty("static.path").getOrElse {
       throw new IllegalStateException("Static path not configured")
     }
   }
 
-  object edition {
-    lazy val usHost = configuration.getStringProperty("edition.host.us").getOrElse {
-      throw new IllegalStateException("US edition not configured")
+  object images {
+    lazy val path = configuration.getStringProperty("images.path").getOrElse {
+      throw new IllegalStateException("Image path not configured")
     }
-    lazy val ukHost = configuration.getStringProperty("edition.host.uk").getOrElse {
-      throw new IllegalStateException("UK edition not configured")
+  }
+
+  object assets {
+    lazy val path = configuration.getStringProperty("assets.path").getOrElse {
+      throw new IllegalStateException("Image path not configured")
     }
-    private lazy val editionsForHosts = Map(
-      ukHost -> "UK",
-      usHost -> "US"
-    )
-    def apply(origin: Option[String]): String = origin flatMap { editionsForHosts.get(_) } getOrElse "UK"
   }
 
   object javascript {
@@ -85,13 +101,14 @@ class GuardianConfiguration(
     lazy val config: Map[String, String] = Map(
       "oasUrl" -> "http://oas.guardian.co.uk/RealMedia/ads/",
       "oasSiteId" -> "beta.guardian.co.uk/oas.html",
-      "ophanUrl" -> "http://s.ophan.co.uk/js/ophan.min"
+      "ophanUrl" -> "http://s.ophan.co.uk/js/ophan.min",
+      "googleSearchUrl" -> "http://www.google.co.uk/cse/cse.js"
     )
     lazy val pageData: Map[String, String] = {
       val keys = configuration.getPropertyNames.filter(_.startsWith("guardian.page."))
       keys.foldLeft(Map.empty[String, String]) {
         case (map, key) => map + (key -> configuration.getStringProperty(key).getOrElse {
-          throw new IllegalStateException("no value for key " + key)
+          throw new IllegalStateException(s"no value for key $key")
         })
       }
     }
@@ -112,6 +129,13 @@ class GuardianConfiguration(
   object nginx {
     lazy val log: String = configuration.getStringProperty("nginx.log").getOrElse("/var/log/nginx/access.log")
   }
+
+  // log out Play config on start
+  log.info("Play config ----------------------------------------------------------------------------")
+  Play.maybeApplication.map(c => c.configuration.entrySet.toSeq.sortBy(_._1).foreach{ case (k,v) =>
+    log.info(s"$k=$v")
+  })
+  log.info("Play config ----------------------------------------------------------------------------")
 }
 
 object ManifestData {

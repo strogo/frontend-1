@@ -1,19 +1,26 @@
 package recorder
 
-import java.io.{ FileReader, FileWriter, BufferedWriter, File }
+import java.io._
 import org.apache.commons.codec.digest.DigestUtils
 import io.Source
 import com.gu.openplatform.contentapi.connection.HttpResponse
+import concurrent.Future
+import common.ExecutionContexts
 
-trait HttpRecorder {
+
+trait HttpRecorder extends ExecutionContexts {
 
   def baseDir: File
 
-  def load(url: String, headers: Map[String, String] = Map.empty)(fetch: => HttpResponse): HttpResponse = {
+  // loads api call from disk. if it cannot be found on disk go get it and save to disk
+  def load(url: String, headers: Map[String, String] = Map.empty)(fetch: => Future[HttpResponse]):Future[HttpResponse] = {
     val fileName = name(url, headers)
-    get(fileName).map { toResponse }.getOrElse {
+    get(fileName).map { f =>
+      val response = toResponse(f)
+      Future(response)
+    }.getOrElse {
       val response = fetch
-      put(name(url, headers), fromResponse(response))
+      response.foreach(r => put(fileName, fromResponse(r)));
       response
     }
   }
@@ -25,7 +32,7 @@ trait HttpRecorder {
 
   private def put(name: String, value: String) {
     val file = new File(baseDir, name)
-    val out = new FileWriter(file)
+    val out = new OutputStreamWriter(new FileOutputStream(file), "UTF-8")
     out.write(value)
     out.close()
   }
@@ -33,7 +40,7 @@ trait HttpRecorder {
   private def get(name: String): Option[String] = {
     val file = new File(baseDir, name)
     if (file.exists()) {
-      Some(Source.fromFile(file).getLines.mkString)
+      Some(Source.fromFile(file, "UTF-8").getLines.mkString)
     } else {
       None
     }
@@ -50,7 +57,7 @@ trait HttpRecorder {
     if (response.statusCode == 200) {
       response.body
     } else {
-      "Error:" + response.statusCode
+      s"Error:${response.statusCode}"
     }
   }
 

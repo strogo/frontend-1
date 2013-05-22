@@ -1,18 +1,18 @@
 package com.gu.test;
 
-import java.util.HashMap;
-import java.util.Map;
-
-import junit.framework.Assert;
+import cucumber.api.java.en.Given;
+import cucumber.api.java.en.Then;
+import cucumber.api.java.en.When;
 import junitx.framework.StringAssert;
-
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebElement;
 
-import cucumber.annotation.en.Given;
-import cucumber.annotation.en.Then;
-import cucumber.annotation.en.When;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 
 public class ArticleSteps {
@@ -78,8 +78,8 @@ public class ArticleSteps {
 
 	@Then("^\"([^\"]*)\" is displayed$")
 	public void is_displayed(String headerText) throws Throwable {
-		WebElement relatedHeader = webDriver.waitForElement(By.cssSelector("#js-related h3"));
-		Assert.assertEquals(headerText, relatedHeader.getText());
+		WebElement relatedHeader = webDriver.waitForElement(By.cssSelector("aside h3"));
+		assertEquals(headerText, relatedHeader.getText());
 	}
 
 	@Then("^\"([^\"]*)\" \"([^\"]*)\" displayed$")
@@ -89,22 +89,24 @@ public class ArticleSteps {
 
 	@When("^I select the sectional \"([^\"]*)\"$")
 	public void I_select_sectional(String arg1) throws Throwable {
-		webDriver.findElement(By.xpath("//*[@id='js-popular-tabs']/li[2]/a")).click();
+        By sectionalMostPopular=(By.xpath("//*[@id='js-popular-tabs']/li[2]/a"));
+		webDriver.jsClick(webDriver.findElement(sectionalMostPopular));
 	}
 
 	@When("^I select the pan-site \"([^\"]*)\"$")
 	public void I_select_pan_site(String arg1) throws Throwable {
-		webDriver.findElement(By.xpath("//*[@id='js-popular-tabs']/li[1]/a")).click();
+        By panSiteMostPopular=(By.xpath("//*[@id='js-popular-tabs']/li[1]/a"));
+		webDriver.jsClick(webDriver.findElement(panSiteMostPopular));
 	}
 
 	@Then("^I can see a list of the most popular stories on guardian.co.uk for the section I am in$")
 	public void I_can_see_list_popular_stories_on_guardian_for_the_section_i_am_in() throws Throwable {
-		Assert.assertEquals("block", webDriver.getElementCssValue(By.id("tabs-popular-2"), "display"));
+		assertEquals("block", webDriver.getElementCssValue(By.id("tabs-popular-2"), "display"));
 	}
 
 	@Then("^I can see a list of the most popular stories on guardian.co.uk for the whole guardian site$")
 	public void I_can_see_a_list_of_the_most_popular_stories_on_guardian_co_uk_for_the_whole_guardian_site() throws Throwable {
-		Assert.assertEquals("block", webDriver.getElementCssValue(By.id("tabs-popular-1"), "display"));
+		assertEquals("block", webDriver.getElementCssValue(By.id("tabs-popular-1"), "display"));
 	}
 	
 	@When("^\"([^\"]*)\" is unavailable$")
@@ -114,23 +116,23 @@ public class ArticleSteps {
 
 	@Then("^\"([^\"]*)\" is not displayed$")
 	public void is_not_displayed(String arg1) throws Throwable {
-		Assert.assertTrue(webDriver.findElements(By.id("related-trails")).size() == 0);
+		assertTrue(webDriver.findElements(By.id("related-trails")).size() == 0);
 	}
 
 	@Then("^\"([^\"]*)\" section tab should read \"([^\"]*)\"$")
 	public void section_tab_show_read(String arg1, String arg2) throws Throwable {
-		Assert.assertTrue(webDriver.isTextPresentByElement(By.className("tabs-selected"), arg2));
+		assertTrue(webDriver.isTextPresentByElement(By.className("tabs-selected"), arg2));
 	}
 
 	@When("^I click \"([^\"]*)\" tab at the top of the page$")
 	public void I_click_tab_at_the_top_of_the_page(String linkText) throws Throwable {
-		webDriver.findElement(By.linkText(linkText)).click();
+		webDriver.click(webDriver.findElement(By.linkText(linkText)));
 	}
 
 	@Then("^a list of \"([^\"]*)\" opens$")
 	public void a_list_of_opens(String arg1) throws Throwable {
 		// wait for top stories panel to open
-		Assert.assertTrue(webDriver.waitForCss(By.id("topstories-header"), "display", "block"));
+		assertTrue(webDriver.waitForCss(By.id("topstories-header"), "display", "block"));
 	}
 
 	@Then("^another click on \"([^\"]*)\" closes the list.$")
@@ -138,41 +140,41 @@ public class ArticleSteps {
 		// NOTE - HACKY! need to force wait 400ms wait, as can't click on again any quicker
 		Thread.sleep(500);
 		// click the tab
-		webDriver.findElement(By.linkText(linkText)).click();
+		webDriver.click(webDriver.findElement(By.linkText(linkText)));
 		// wait for top stories tab to close
-		Assert.assertTrue(webDriver.waitForCss(By.id("topstories-header"), "display", "none"));
+		assertTrue(webDriver.waitForCss(By.id("topstories-header"), "display", "none"));
 	}
 
 	@When("^I click \"([^\"]*)\" tab at the foot of the page$")
 	public void I_click_tab_at_the_foot_of_the_page(String arg1) throws Throwable {
-		webDriver.findElement(By.id("topstories-control-footer")).click();
+		webDriver.click(webDriver.findElement(By.id("topstories-control-footer")));
 	}
 
 	@Then("^a list of the footer \"([^\"]*)\" opens$")
 	public void a_list_of_the_footer_opens(String arg1) throws Throwable {
-		Assert.assertEquals("block", webDriver.getElementCssValue(By.id("topstories-footer"), "display"));
+		assertEquals("block", webDriver.getElementCssValue(By.id("topstories-footer"), "display"));
 	}
 
 	@Then("^another click on the footer \"([^\"]*)\" closes the list.$")
 	public void another_click_on_the_footer_closes_the_list(String arg1) throws Throwable {
-		webDriver.findElement(By.id("topstories-control-footer")).click();
-		Assert.assertEquals("none", webDriver.getElementCssValue(By.id("topstories-footer"), "display"));
+		webDriver.click(webDriver.findElement(By.id("topstories-control-footer")));
+		assertEquals("none", webDriver.getElementCssValue(By.id("topstories-footer"), "display"));
 	}
 
 	@When("^I select the sections navigation button$")
 	public void I_select_the_sections_navigation_button( ) throws Throwable {
-		webDriver.findElement(By.id("sections-control-header")).click();
+		webDriver.jsClick(webDriver.findElement(By.className("control--sections")));
 	}
 
 	@Then("^it should show me a list of sections$")
 	public void it_should_show_a_list_of_sections() throws Throwable {
-		Assert.assertEquals("block", webDriver.getElementCssValue(By.id("sections-header"), "display"));
+		assertEquals("block", webDriver.getElementCssValue(By.className("nav-popup-sections"), "display"));
 	}
 
 	@Then("^another click on the \"([^\"]*)\" \"([^\"]*)\" tab closes the list$")
 	public void another_click_on_the_tab_closes_the_list(String arg1, String arg2) throws Throwable {
-		webDriver.findElement(By.id("sections-control-" + arg1)).click();
-		Assert.assertEquals("none", webDriver.getElementCssValue(By.id("sections-" + arg1), "display"));
+		webDriver.click(webDriver.findElement(By.id("sections-control-" + arg1)));
+		assertEquals("none", webDriver.getElementCssValue(By.id("sections-" + arg1), "display"));
 	}
 
 	@Given("^I have a fast connection speed$")
@@ -184,19 +186,19 @@ public class ArticleSteps {
 	@Then("^the high resolution version of the image is displayed$")
 	public void article_high_resolution_image_and_caption_is_displayed() throws Throwable {
 		WebElement highResImage = webDriver.findElement(By.className("image-high"));
-		Assert.assertTrue(highResImage != null);
+		assertTrue(highResImage != null);
 	}
 
 
 	@Then("^I can (expand|collapse) expanders$")
 	public void I_can_expand_and_collapse_expanders(String sectionState) throws Throwable {
 		// waits for expander to appear
-		WebElement expander = webDriver.waitForVisible(By.className("cta"));
-		expander.click();
+		WebElement expander = webDriver.waitForElement(By.className("cta"));
+		webDriver.jsClick(expander);
 		
 		String expectedTrailblockHeight = (sectionState.equals("expand")) ? "none" : "0";
 		// sections are hidden with css max-height
-		Assert.assertTrue(webDriver.waitForCss(By.cssSelector("#related-trails .panel"), "max-height", expectedTrailblockHeight));
+		assertTrue(webDriver.waitForCss(By.cssSelector(".related-trails .panel"), "max-height", expectedTrailblockHeight));
 	}
 
 	@When("^Back to top is selected$")
@@ -204,11 +206,11 @@ public class ArticleSteps {
 
 	}
 
-	@Then("^article page scrolls to the top$")
+	@Then("^page scrolls to the top$")
 	public void article_page_scrolls_to_the_top() throws Throwable {
 		//get href value of the element (back to the top) to locate for example "top" div is show above the container as a way for confirming the Back to the top will work
 		String var = webDriver.findElement(By.linkText("Back to top")).getAttribute("href");
-		Assert.assertTrue(webDriver.findElements(By.id(var.substring(var.indexOf("#")+1))).size() > 0);
+		assertTrue(webDriver.findElements(By.id(var.substring(var.indexOf("#")+1))).size() > 0);
 	}
 
 	@When("^I click footer links \\(Desktop version, Help, Contact us, Feedback, T&C's and Pricacy policy\\)$")

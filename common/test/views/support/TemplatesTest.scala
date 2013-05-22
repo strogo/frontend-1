@@ -9,15 +9,16 @@ import com.gu.openplatform.contentapi.model.MediaAsset
 import model.Image
 import scala.Some
 import model.Tag
+import common.editions.Uk
 
 class TemplatesTest extends FlatSpec with ShouldMatchers {
 
   "RemoveOuterPara" should "remove outer paragraph tags" in {
-    RemoveOuterParaHtml(" <P> foo <b>bar</b> </p> ").text should be(" foo <b>bar</b> ")
+    RemoveOuterParaHtml(" <P> foo <b>bar</b> </p> ").body should be(" foo <b>bar</b> ")
   }
 
   it should "not modify text that is not enclosed in p tags" in {
-    RemoveOuterParaHtml("  foo <b>bar</b>").text should be("  foo <b>bar</b>")
+    RemoveOuterParaHtml("  foo <b>bar</b>").body should be("  foo <b>bar</b>")
   }
 
   "typeOrTone" should "ignore Article and find Video" in {
@@ -63,7 +64,7 @@ class TemplatesTest extends FlatSpec with ShouldMatchers {
       def videoImages = Nil
     }
 
-    val body = XML.loadString(withJsoup(bodyTextWithInlineElements)(PictureCleaner(images)).text.trim)
+    val body = XML.loadString(withJsoup(bodyTextWithInlineElements)(PictureCleaner(images)).body.trim)
 
     val figures = (body \\ "figure").toList
 
@@ -92,7 +93,7 @@ class TemplatesTest extends FlatSpec with ShouldMatchers {
   }
 
   "InBodyLinkCleaner" should "clean links" in {
-    val body = XML.loadString(withJsoup(bodyTextWithLinks)(InBodyLinkCleaner("in body link")).text.trim)
+    val body = XML.loadString(withJsoup(bodyTextWithLinks)(InBodyLinkCleaner("in body link")).body.trim)
 
     val link = (body \\ "a").head
 
@@ -102,7 +103,7 @@ class TemplatesTest extends FlatSpec with ShouldMatchers {
 
   "BlockCleaner" should "insert block ids in minute by minute content" in {
 
-    val body = withJsoup(bodyWithBLocks)(BlockNumberCleaner).text.trim
+    val body = withJsoup(bodyWithBLocks)(BlockNumberCleaner).body.trim
 
     body should include("""<span id="block-14">some heading</span>""")
     body should include("""<p id="block-1">some more text</p>""")
@@ -146,15 +147,15 @@ class TemplatesTest extends FlatSpec with ShouldMatchers {
   }
 
   "SafeName" should "understand the Javascript name of top stories" in {
-    SafeName(TrailblockDescription("", "News", 3)) should be("top-stories")
+    SafeName(ItemTrailblockDescription("", "News", 3)(Uk)) should be("top-stories")
   }
 
   it should "understand a section" in {
-    SafeName(TrailblockDescription("sport", "Sport", 3)) should be("sport")
+    SafeName(ItemTrailblockDescription("sport", "Sport", 3)(Uk)) should be("sport")
   }
 
   it should "understand a tag" in {
-    SafeName(TrailblockDescription("sport/triathlon", "Sport", 3)) should be("sport-triathlon")
+    SafeName(ItemTrailblockDescription("sport/triathlon", "Sport", 3)(Uk)) should be("sport-triathlon")
   }
 
   "StripHtmlTags" should "strip html from string" in {

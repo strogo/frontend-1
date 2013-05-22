@@ -56,7 +56,7 @@ var outputHTML = [];
 var tableClosingHTML = '</tbody></table>';
 
 // add a single reference to the sprite background
-pngcssrules.push(".i { background-image: url(" + spritepath + "sprite.png); background-repeat: no-repeat; display: inline-block; }");
+pngcssrules.push(".i { background-repeat: no-repeat; display: inline-block; }");
 
 
 // increment the current file index and process it
@@ -150,7 +150,7 @@ function processFile() {
                     }, svgdata);
 
 
-                    pngcssrules.push( "." + cssprefix + filenamenoext + " { background-position: -" + coords.x + "px -" + coords.y + "px; width: " + coords.w + "; height: " + coords.h + "; }");
+                    pngcssrules.push( "." + cssprefix + filenamenoext + " { background-position: -" + coords.x + "px -" + coords.y + "px; width: " + coords.w + "px; height: " + coords.h + "px; }");
 
                   // process the next svg
                   nextFile();

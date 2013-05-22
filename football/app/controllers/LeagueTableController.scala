@@ -1,12 +1,14 @@
 package controllers
 
 import common._
+import conf._
 import feed.Competitions
 import play.api.mvc.{ Action, Controller }
 import model._
 import model.Page
 import pa.{ Round, LeagueTableEntry }
 import common.TeamCompetitions
+
 
 case class TablesPage(
     page: Page,
@@ -17,7 +19,7 @@ case class TablesPage(
   lazy val singleCompetition = tables.size == 1
 }
 
-object LeagueTableController extends Controller with Logging with CompetitionTableFilters {
+object LeagueTableController extends Controller with Logging with CompetitionTableFilters with ExecutionContexts {
 
   private def loadTables: Seq[Table] = Competitions.competitions.filter(_.hasLeagueTable).map { Table(_) }
 
@@ -38,10 +40,11 @@ object LeagueTableController extends Controller with Logging with CompetitionTab
         table.copy(groups = table.groups.map { group => group.copy(entries = group.entries.take(4)) })
       }
     }
+    
+    val htmlResponse = views.html.tables(TablesPage(page, groups, "/football", filters, None))
+    val jsonResponse = views.html.fragments.tablesBody(TablesPage(page, groups, "/football", filters, None))
+    renderFormat(htmlResponse, jsonResponse, page, Switches.all)
 
-    Cached(page) {
-      Ok(Compressed(views.html.tables(TablesPage(page, groups, "/football", filters, None))))
-    }
   }
 
   def renderTeamlist() = Action { implicit request =>
@@ -59,26 +62,27 @@ object LeagueTableController extends Controller with Logging with CompetitionTab
     }
 
     val comps = Competitions.competitions.filter(_.showInTeamsList).filter(_.hasTeams)
+    
+    val htmlResponse = views.html.teamlist(TablesPage(page, groups, "/football", filters, None), comps)
+    val jsonResponse = views.html.fragments.teamlistBody(TablesPage(page, groups, "/football", filters, None), comps)
+    renderFormat(htmlResponse, jsonResponse, page, Switches.all)
 
-    Cached(page) {
-      Ok(Compressed(views.html.teamlist(TablesPage(page, groups, "/football", filters, None), comps)))
-    }
   }
 
   def renderCompetition(competition: String) = Action { implicit request =>
-    loadTables.find(_.competition.url.endsWith("/" + competition)).map { table =>
+    loadTables.find(_.competition.url.endsWith(s"/$competition")).map { table =>
 
       val page = new Page(
-        Some("http://www.guardian.co.uk/football/%s/tables".format(competition)),
+        Some(s"http://www.guardian.co.uk/football/$competition/tables"),
         "football/tables",
         "football",
-        table.competition.fullName + " table",
+        s"${table.competition.fullName} table",
         "GFE:Football:automatic:competition tables"
       )
-
-      Cached(page) {
-        Ok(Compressed(views.html.tables(TablesPage(page, Seq(table), table.competition.url, filters, Some(table.competition)))))
-      }
+    
+      val htmlResponse = views.html.tables(TablesPage(page, Seq(table), table.competition.url, filters, Some(table.competition)))
+      val jsonResponse = views.html.fragments.tablesBody(TablesPage(page, Seq(table), table.competition.url, filters, Some(table.competition)))
+      renderFormat(htmlResponse, jsonResponse, page, Switches.all)
     }.getOrElse(Redirect("/football/tables"))
   }
 }

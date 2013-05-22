@@ -2,32 +2,46 @@
     Module: expandable.js
     Description: Used to make a list of items expand and contract
 */
-define(['common', 'bean'], function (common, bean) {
+define([
+    'common',
+    'bean'
+], function (
+    common,
+    bean
+) {
     /*
         @param {Object} options hash of configuration options:
-            id          : {String}  Id of DOM element to convert
+            dom         : DOM element to convert
             expanded    : {Boolean} Whether the component should init in an expanded state
+            showCount   : {Boolean} Whether to display the count in the CTA
     */
-    var Expandable = function (opts) {
+    var Expandable = function (options) {
 
-        var dom, // root element of the trailblock
-            id = opts.id,
-            expanded = (opts.hasOwnProperty('expanded')) ? expanded : true, // true = open, false = closed
-            cta = document.createElement('span'),
+        var opts = options || {},
+            dom = common.$g(opts.dom), // root element of the trailblock
+            expanded = (opts.expanded === false) ? false : true, // true = open, false = closed
+            cta = document.createElement('button'),
             domCount,
-            count;
+            count,
+            self = this,
+            showCount = (opts.showCount === false) ? false : true;
 
         // View
         
         var view = {
            
             updateCallToAction: function () {
-                cta.innerHTML = 'Show ' + model.getCount() + ' ' + ((expanded) ? 'fewer' : 'more');
+                var text = 'Show ';
+                if (showCount) {
+                    text += model.getCount() + ' ';
+                }
+                text += (expanded) ? 'fewer' : 'more';
+                cta.innerHTML = text;
                 cta.setAttribute('data-link-name', 'Show ' + ((expanded) ? 'more' : 'fewer'));
                 cta.setAttribute('data-is-ajax', '1');
             },
             
-            renderState: function (expanded) {
+            renderState: function () {
                 if(expanded) {
                     dom.removeClass('shut');
                 } else {
@@ -37,7 +51,7 @@ define(['common', 'bean'], function (common, bean) {
             
             renderCallToAction: function () {
                 bean.add(cta, 'click', function (e) {
-                    common.mediator.emit('modules:expandable:cta:toggle:' + id);
+                    model.toggleExpanded();
                 });
                 cta.className = 'cta expander';
                 dom[0].appendChild(cta);
@@ -58,13 +72,14 @@ define(['common', 'bean'], function (common, bean) {
 
         var model = {
         
-            toggleExpanded: function (eventId) {
+            toggleExpanded: function () {
                 expanded = (expanded) ? false : true;
-                common.mediator.emit('modules:expandable:expandedChange:' + id, expanded);
+                view.renderState();
+                view.updateCallToAction();
             },
 
             getCount: function () {
-                return dom.attr('data-count');
+                return parseInt(dom.attr('data-count'), 10);
             },
 
             isOpen: function () {
@@ -72,25 +87,19 @@ define(['common', 'bean'], function (common, bean) {
             }
         };
 
-        this.init = function () {
-            dom = common.$g('#' + id);
+        return {
+            init: function() {
 
-            if (model.getCount() < 3) {
-                return false;
-            }
+                if (dom.hasClass('expandable-initialised') || !dom.html() || model.getCount() < 3) {
+                    return false;
+                }
+                dom.addClass('expandable-initialised');
 
-            view.renderCallToAction();
-            view.renderState(expanded);
+                view.renderCallToAction();
+                view.renderState();
+            },
+            toggle: model.toggleExpanded
         };
-
-        // view listeners
-        common.mediator.on('modules:expandable:expandedChange:' + id, view.renderState);
-        common.mediator.on('modules:expandable:expandedChange:' + id, view.updateCallToAction);
-        common.mediator.on('modules:expandable:expandedChange:' + id, view.scrollToCallToAction);
-
-        // model listeners
-        common.mediator.on('modules:expandable:cta:toggle:' + id, model.toggleExpanded);
-
     };
 
     return Expandable;

@@ -6,6 +6,7 @@ import com.gu.management.{ PropertiesPage, StatusPage, ManifestPage, Switchable,
 import com.gu.management.play.{ Management => GuManagement }
 
 import com.gu.management.logback.LogbackLevelPage
+import contentapi.ContentApiMetrics
 
 object Switches {
   val all: Seq[Switchable] = CommonSwitches.all
@@ -14,7 +15,7 @@ object Switches {
 class SwitchBoardPlugin(app: PlayApp) extends SwitchBoardAgent(Configuration, Switches.all)
 
 object Metrics {
-  val all: Seq[Metric] = ContentApi.metrics.all ++ CommonMetrics.all
+  val all: Seq[Metric] = ContentApiMetrics.all ++ CommonMetrics.all
 }
 
 object Management extends GuManagement {
@@ -24,7 +25,7 @@ object Management extends GuManagement {
     new ManifestPage,
     new UrlPagesHealthcheckManagementPage(
       "/top-stories?callback=navigation",
-      "/most-popular/society?callback=showMostPopular",
+      "/most-read/society.json?callback=showMostPopular",
       "/related/theobserver/2012/nov/18/the-big-issue-cyclists-versus-motorists?callback=showRelated"
     ),
     StatusPage(applicationName, Metrics.all),

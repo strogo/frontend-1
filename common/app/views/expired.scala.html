@@ -1,0 +1,7 @@
+@(content: model.Content)(implicit request: RequestHeader)
+
+@main(content, CommonSwitches.all){ }{
+	
+	@fragments.expiredBody(content)
+	
+}

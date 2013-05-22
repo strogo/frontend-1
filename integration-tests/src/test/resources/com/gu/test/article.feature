@@ -28,6 +28,7 @@ Feature: Article page
 		When I select the pan-site "Most read"
 		Then I can see a list of the most popular stories on guardian.co.uk for the whole guardian site
 
+    @ignore
 	Scenario: Open and close top story from top of page
 	    Given I am on an article 
 		When I click "Top stories" tab at the top of the page
@@ -57,7 +58,7 @@ Feature: Article page
     Scenario: Back to top
         Given I am on an article
     	When Back to top is selected
-        Then article page scrolls to the top
+        Then page scrolls to the top
 
 	@ignore
     Scenario: Page footer links

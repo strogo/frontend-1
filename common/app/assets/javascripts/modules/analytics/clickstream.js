@@ -11,7 +11,7 @@ define(['common', 'modules/detect', 'bean'], function (common, detect, bean) {
             });
         };
 
-        var hasSameHost = function(url) {
+        var compareHosts = function(url) {
             var urlHost,
                 urlProtocol,
                 host,
@@ -32,43 +32,55 @@ define(['common', 'modules/detect', 'bean'], function (common, detect, bean) {
             return !urlHost || (urlHost === host && urlProtocol === protocol);
         };
 
-        var getTag = function (element, tag) {
-
-            var elementName = element.tagName.toLowerCase(),
-                dataLinkName = element.getAttribute('data-link-name');
-
-            if (elementName === 'body') {
-                return tag.reverse().join(' | ');
-            }
+        var getClickSpec = function (spec) {
+            var el = spec.el,
+                elName = el.tagName.toLowerCase(),
+                dataLinkName = el.getAttribute('data-link-name'),
+                href;
 
             if (dataLinkName) {
-                tag.push(dataLinkName);
+                spec.tag = spec.tag || [];
+                spec.tag.push(dataLinkName);
             }
 
-            return getTag(element.parentNode, tag);
+            if (elName === 'body') {
+                if (spec.validTarget && spec.tag.length) {
+                    spec.tag = [].concat(spec.tag).reverse().join(' | ');
+                    if(el.getAttribute('data-link-test')) {
+                        spec.tag = el.getAttribute('data-link-test') + ' | ' + spec.tag;
+                    }
+                    delete spec.el;
+                    delete spec.validTarget;
+                    return spec;
+                }
+                else {
+                    return false;
+                }
+            }
+
+            if(!spec.validTarget) {
+                spec.validTarget = filterSource(el.tagName.toLowerCase()).length > 0;
+                if(spec.validTarget) {
+                    spec.target = el;
+                    href = el.getAttribute('href');
+                    spec.samePage = href && href.indexOf('#') === 0
+                        || elName === 'button'
+                        || el.hasAttribute('data-is-ajax');
+
+                    spec.sameHost = spec.samePage || compareHosts(href);
+                }
+            }
+
+            // Recurse
+            spec.el = el.parentNode;
+            return getClickSpec(spec);
         };
 
         // delegate, emit the derived tag
         bean.add(document.body, 'click', function (event) {
-            var target, dataIsXhr, href, isSamePage, isSameHost;
-
-            if (filterSource(event.target.tagName.toLowerCase()).length > 0) {
-
-                target = event.target;
-                dataIsXhr = target.getAttribute('data-is-ajax');
-                href = target.getAttribute('href');
-
-                isSamePage = (
-                    !!dataIsXhr ||                             // xhr
-                    (href && (href.indexOf('#') === 0)) ||     // internal anchor
-                    'button' === target.nodeName.toLowerCase() // UI button
-                );
-                isSameHost = hasSameHost(href);
-
-                common.mediator.emit('module:clickstream:click', [target, getTag(target, []), isSamePage, isSameHost]);
-
-            } else {
-                return false;
+            var clickSpec = getClickSpec({el: event.target});
+            if (clickSpec) {
+                common.mediator.emit('module:clickstream:click', clickSpec);
             }
         });
 

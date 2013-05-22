@@ -13,42 +13,51 @@ define([
     var TrailblockToggle = function () {
 
         var options = {
-            'toggleSelectorClass': '.js-toggle-trailblock',
             'edition' : '',
-            'prefName': 'front-trailblocks-'
+            'prefPrefix': 'front-trailblocks-'
         };
 
         var view = {
 
-            showToggleLinks: function () {
-
-                var toggles = common.$g(options.toggleSelectorClass).each(function (toggle) {
-
+            showToggleLinks: function (context) {
+                Array.prototype.forEach.call(context.querySelectorAll('.js-toggle-trailblock'), function(toggle) {
+                    bonzo(toggle).removeClass('js-toggle-trailblock');
                     bean.add(toggle, 'click', function (e) {
-                        common.mediator.emit('modules:trailblockToggle:toggle', this);
+                        view.toggleTrailblock({
+                            trigger: this,
+                            context: context
+                        });
                     });
                 });
             },
 
-            toggleTrailblock: function (trigger, manualTrigger) {
+            toggleTrailblock: function (opts) {
 
-                var idPrefix = "front-trailblock-";
-                var classesToToggle = 'rolled-out rolled-up';
+                var trigger       = opts.trigger,
+                    manualTrigger = opts.manualTrigger,
+                    context       = opts.context,
+                    classPrefix = "front-trailblock-",
+                    classesToToggle = 'rolled-up',
+                    trailblockId,
+                    trailblock;
 
                 if (manualTrigger) {
-                    trigger = document.getElementById('js-trigger-' + manualTrigger);
+                    trigger = context.querySelector('.js-trigger-' + manualTrigger.replace(/[^a-z0-9\-]+/, ''));
+                    if(bonzo(trigger).hasClass('userpref-applied')) {
+                        return;
+                    } else {
+                        bonzo(trigger).addClass('userpref-applied');
+                    }
                 }
 
                 // convert trigger to bonzo object
                 trigger = bonzo(trigger);
 
-                var trailblockId = trigger.attr('data-block-name'),
-                    trailblock;
+                trailblockId = trigger.attr('data-block-name');
 
-                trailblock = idPrefix;
-                trailblock += trailblockId;
+                trailblock = '.' + classPrefix + trailblockId;
 
-                trailblock = document.getElementById(trailblock);
+                trailblock = context.querySelector(trailblock);
                 bonzo(trailblock).toggleClass(classesToToggle);
 
                 var text = trigger.text();
@@ -66,17 +75,18 @@ define([
                 }
             },
 
-            renderUserPreference: function () {
+            renderUserPreference: function (context) {
                 // bit of duplication here from function below
-                if (window.localStorage) {
-                    var existingPrefs = userPrefs.get(options.prefName);
+                var existingPrefs = userPrefs.get(options.prefName);
 
-                    if (existingPrefs) {
-                        var sectionArray = existingPrefs.split(',');
-                        for (var i in sectionArray) {
-                            var item = sectionArray[i];
-                            common.mediator.emit('modules:trailblockToggle:toggle', null, item);
-                        }
+                if (existingPrefs) {
+                    var sectionArray = existingPrefs.split(',');
+                    for (var i in sectionArray) {
+                        var item = sectionArray[i];
+                        view.toggleTrailblock({
+                            manualTrigger: item,
+                            context: context
+                        });
                     }
                 }
             }
@@ -87,49 +97,43 @@ define([
 
             logPreference: function (shouldHideSection, section) {
 
-                if (window.localStorage) {
-                    var existingPrefs = userPrefs.get(options.prefName);
+                var existingPrefs = userPrefs.get(options.prefName);
 
-                    if (existingPrefs) {
+                if (existingPrefs) {
 
-                        // see if it already exists
-                        var sectionArray = existingPrefs.split(',');
-                        for (var i in sectionArray) {
-                            var item = sectionArray[i];
-                            if (item === section) {
-                                if (!shouldHideSection) {
-                                    sectionArray.splice(i, 1); // remove it from list
-                                }
+                    // see if it already exists
+                    var sectionArray = existingPrefs.split(',');
+                    for (var i in sectionArray) {
+                        var item = sectionArray[i];
+                        if (item === section) {
+                            if (!shouldHideSection) {
+                                sectionArray.splice(i, 1); // remove it from list
                             }
                         }
-
-                        if (shouldHideSection) {
-                            sectionArray.push(section);
-                        }
-
-                        var newPrefs = sectionArray.join(',');
-                        userPrefs.set(options.prefName, newPrefs);
-
-                    // need to create it instead
-                    } else {
-                        userPrefs.set(options.prefName, section);
                     }
 
+                    if (shouldHideSection) {
+                        sectionArray.push(section);
+                    }
+
+                    var newPrefs = sectionArray.join(',');
+                    userPrefs.set(options.prefName, newPrefs);
+
+                // need to create it instead
+                } else {
+                    userPrefs.set(options.prefName, section);
                 }
+
 
             }
 
         };
 
-        this.go = function (edition) {
-            options.edition = edition;
-            options.prefName = options.prefName + options.edition;
-            view.showToggleLinks();
-            view.renderUserPreference();
+        this.go = function (config, context) {
+            options.prefName = options.prefPrefix + config.page.edition;
+            view.showToggleLinks(context);
+            view.renderUserPreference(context);
         };
-
-        //View Listeners
-        common.mediator.on('modules:trailblockToggle:toggle', view.toggleTrailblock);
 
     };
 

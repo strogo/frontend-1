@@ -5,10 +5,10 @@
 
   <title id="foo">Jasmine Spec Runner</title>
 
-  <link rel="shortcut icon" type="image/png" href="vendor/jasmine-1.2.0/jasmine_favicon.png">
-  <link rel="stylesheet" type="text/css" href="vendor/jasmine-1.2.0/jasmine.css">
-  <script type="text/javascript" src="vendor/jasmine-1.2.0/jasmine.js"></script>
-  <script type="text/javascript" src="vendor/jasmine-1.2.0/jasmine-html.js"></script>
+  <link rel="shortcut icon" type="image/png" href="components/jasmine/images/jasmine_favicon.png">
+  <link rel="stylesheet" type="text/css" href="components/jasmine/lib/jasmine-core/jasmine.css">
+  <script type="text/javascript" src="components/jasmine/lib/jasmine-core/jasmine.js"></script>
+  <script type="text/javascript" src="components/jasmine/lib/jasmine-core/jasmine-html.js"></script>
   <script type="text/javascript" src="../../../app/assets/javascripts/components/curl/dist/curl-with-js-and-domReady/curl.js"></script>
   <script>
       curl({
@@ -22,14 +22,15 @@
                 reqwest:      'components/reqwest/src/reqwest',
                 domwrite:     'components/dom-write/dom-write',
                 analytics:    'modules/analytics',
-                EventEmitter: 'components/eventEmitter/src/EventEmitter',
+                EventEmitter: 'components/eventEmitter/EventEmitter',
                 swipe:        'components/swipe/swipe',
+                swipeview:    'components/swipeview/src/swipeview',
                 omniture:     '../../../app/public/javascripts/vendor/omniture',
                 fixtures:     '../../../test/assets/javascripts/helpers/fixtures'
             }
       });
   </script>
-  <style>
+  <style>   
     ul ul { margin-left: 0; padding: 0; }
     ul ul li { margin-left: 40px; }
     .is-off:after { content: " -- (hidden)"; }
@@ -52,9 +53,15 @@
         margin: 0 auto !important;
     }
   </style>
-  <script type="text/javascript" src="vendor/sinon-1.3.4/sinon.js"></script>
-  <script type="text/javascript" src="vendor/sinon-1.3.4/jasmine-sinon.js"></script>
-  <script type="text/javascript" src="vendor/seedrandom.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon/spy.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon/stub.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon/util/event.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon/util/fake_timers.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon/util/fake_server.js"></script>
+  <script type="text/javascript" src="components/sinon/lib/sinon/util/fake_xml_http_request.js"></script>
+  <script type="text/javascript" src="components/jasmine-sinon/lib/jasmine-sinon.js"></script>
+  <script type="text/javascript" src="components/seedrandom/index.js"></script>
   <script type="text/javascript">
 
     window.onhashchange = function(){
@@ -99,15 +106,16 @@
 <body>
 
     <!-- Adverts.spec, keeping these here so they stay on screen. :/ -->
-    <div id="ad-slot-top-banner-ad" data-link-name="ad slot top-banner-ad" data-base="Top2" data-median="Top" data-extended="x54" class="ad-slot">
+    <div class="ad-slot-top-banner-ad ad-slot" data-link-name="ad slot top-banner-ad" data-base="Top2" data-median="Top" data-extended="x54">
       <div class="ad-container"></div>
     </div>
 
-    <div id="ad-slot-bottom-banner-ad" data-link-name="ad slot bottom-banner-ad" data-base="Bottom2" data-median="Bottom" data-extended="x54" class="ad-slot">
+    <div class="ad-slot-bottom-banner-ad ad-slot" data-link-name="ad slot bottom-banner-ad" data-base="Bottom2" data-median="Bottom" data-extended="x54">
        <div class="ad-container"></div>
     </div>
 
     <ul id="tests">
+        <li><a href="#AbTest">AB Test</a></li>
         <li>
             Analytics
             <ul>
@@ -124,6 +132,8 @@
                 <li><a href="#Adverts">Adverts</a>
             </ul>
         </li>
+        <li><a href="#Ajax">Ajax</a></li>
+        <li><a href="#Aware">Aware</a></li>
         <li><a href="#Common">Common</a></li>
         <li><a href="#Detect">Detect</a></li>
         <li><a href="#Errors">Errors</a></li>
@@ -136,6 +146,7 @@
                 <li><a href="#Control">Control</a></li>
                 <li><a href="#Sections">Sections</a></li>
                 <li><a href="#TopStories">Top Stories</a></li>
+                <li><a href="#Australia">Australia</a></li>
             </ul>
         </li>
         <li><a href="#Popular">Popular</a></li>
@@ -153,18 +164,19 @@
         <li><a href="#FootballTables">Football Tables</a></li>
         <li><a href="#Gallery">Gallery</a></li>
         <li><a href="#GallerySwipe">Gallery (Swipe)</a></li>
-
         <li><a href="#Router">Router</a></li>
+        <li><a href="#Storage">Storage</a></li>
+        <li><a href="#Swipe">Swipe</a></li>
+        <li><a href="#UserPrefs">UserPrefs</a></li>
     </ul>
 
     <div id="test-cases">
 
         <!-- Related.spec -->
-        <div id="related-1"></div>
-        <div id="related-2"></div>
+        <div class="js-related"></div>
 
         <!-- Popular.spec -->
-        <div id="popular-1"></div>
+        <div class="js-popular"></div>
 
         <!-- Expandables -->
         <style>
@@ -224,6 +236,16 @@
         <div id="trail-g" data-count="2">
         </div>
 
+        <div id="trail-h" data-count="3">
+            <ul>
+                <li class="t1">one</li>
+                <li class="t2">two</li>
+            </ul>
+            <ul class="flex">
+                <li class="t3">three</li>
+            </ul>
+        </div>
+
         <!-- RelativeDates.spec -->
         <div id="relative-dates">
           <p><strong>Test dates</strong> (should be replaced with timestamps)</p>
@@ -253,26 +275,29 @@
         <!-- Tabs.spec -->
         <p id="tabs-test">
 
-          <ol class="tabs js-tabs">
-              <li class="tabs-selected"><a id="tab1" href="#tab1panel">Foo</a></li>
-              <li><a id="tab2" href="#tab2panel">Bar</a></li>
-          </ol>
+          <div class="tabs-container">
+            <ol class="tabs js-tabs">
+                <li class="tabs-selected"><a id="tab1" href="#tab1panel">Foo</a></li>
+                <li><a id="tab2" href="#tab2panel">Bar</a></li>
+            </ol>
 
-          <div class="tabs-content">
-               <div class="tabs-pane" id="tab1panel">foo</div>
-               <div class="tabs-pane js-hidden" id="tab2panel">bar</div>
+            <div class="tabs-content">
+                 <div class="tabs-pane" id="tab1panel">foo</div>
+                 <div class="tabs-pane js-hidden" id="tab2panel">bar</div>
+            </div>
           </div>
 
+          <div class="tabs-container">
+            <ol class="tabs">
+                <li class="tabs-selected"><a id="tab1_2" href="#tab1panel_2">Foo</a></li>
+                <li><a id="tab2_2" href="#tab2panel_2">Bar</a></li>
+                <li><a id="fake-tab" href="http://www.google.com">Google (fake tab)</a></li>
+            </ol>
 
-          <ol class="tabs">
-              <li class="tabs-selected"><a id="tab1_2" href="#tab1panel_2">Foo</a></li>
-              <li><a id="tab2_2" href="#tab2panel_2">Bar</a></li>
-              <li><a id="fake-tab" href="http://www.google.com">Google (fake tab)</a></li>
-          </ol>
-
-          <div class="tabs-content">
-               <div class="tabs-pane" id="tab1panel_2">foo</div>
-               <div class="tabs-pane js-hidden" id="tab2panel_2">bar</div>
+            <div class="tabs-content">
+                 <div class="tabs-pane" id="tab1panel_2">foo</div>
+                 <div class="tabs-pane js-hidden" id="tab2panel_2">bar</div>
+            </div>
           </div>
 
         </p>
@@ -289,22 +314,19 @@
     <div data-link-name="outer div">
         <p id="not-inside-a-link">
             <a href="/foo" id="click-me" data-link-name="the link">The link</a>
+            <a href="/foo" id="click-me-ancestor" data-link-name="the ancestor">
+              <span>
+                <span>
+                  <span id="click-me-descendant" data-link-name="the descendant">The link descendant</span>
+                </span>
+              </span>
+            </a>
             <a href="/foo" id="click-me-quick" data-is-ajax="true" data-link-name="xhr link">Xhr Link</a>
             <button id="click-me-button" data-link-name="the button">Span Link</button>
             <p href="#hello" id="click-me-slow" data-link-name="paragraph">Paragraph 'Link'</p>
             <a href="/foo" id="click-me-internal" data-link-name="internal link">Same-host link</a>
             <a href="http://google.com/foo" id="click-me-external" data-link-name="external link">Other-host link</a>
         </p>
-    </div>
-
-    <!-- TrailblockToggle.spec -->
-
-    <a class="js-toggle-trailblock" href="javascript://" data-zone-name="uk" data-block-name="sport" id="js-trigger-sport">Hide</a>
-
-    <div class="trailblock js-front-trailblock shut rolled-out" id="front-trailblock-sport" data-count="5" data-link-name="front block News">
-      <ul class="unstyled">
-        <li></li>
-      </ul>
     </div>
 
     <!-- Autoupdate.spec -->
@@ -339,18 +361,18 @@
     </div>
 
     <!-- Gallery.spec -->
-    <div style="display: none" id="js-gallery">
-      <p class="box-indent"><a class="is-off" data-is-ajax="true"
-      data-link-name="Gallery Previous" href="javascript://" id="js-gallery-prev"
-      name="js-gallery-prev">Previous</a> Image <span id=
-      "js-gallery-index">1</span> of 16 <a data-is-ajax="true" data-link-name=
-      "Gallery Next" href="?index=2" id="js-gallery-next" name=
+    <div style="display: none" class="js-gallery">
+      <p class="box-indent"><a class="js-gallery-prev is-off" data-is-ajax="true"
+      data-link-name="Gallery Previous" href="javascript://"
+      name="js-gallery-prev">Previous</a> Image <span class="js-gallery-index">1</span> of 16
+      <a data-is-ajax="true" data-link-name=
+      "Gallery Next" href="?index=2" class="js-gallery-next" name=
       "js-gallery-next">Next</a></p>
 
-      <div class="gallery-container" id="js-gallery-holder">
+      <div class="js-gallery-holder gallery-container">
           <ul class="unstyled">
-              <li class="js-current-gallery-slide" data-image="true" data-index=
-              "1" data-total="16" id="js-gallery-item-1">
+              <li class="js-gallery-item-1 js-current-gallery-slide" data-image="true" data-index=
+              "1" data-total="16">
                   <img class="maxed" data-width="393" src=
                   "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352700016/Tour-of-Britain-006.jpg">
 
@@ -363,11 +385,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-2 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352701113/Tour-of-Britain-007.jpg'
               data-image="false" data-index="2" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352701113/Tour-of-Britain-007.jpg"
-              data-total="16" data-width="724" id="js-gallery-item-2">
+              data-total="16" data-width="724">
                   <p class="caption box-indent">Andreas Dietziker of Team NetApp
                   is counted down to the start of his time-trial</p>
 
@@ -375,11 +397,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-3 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352694197/Tour-of-Britain-001.jpg'
               data-image="false" data-index="3" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352694197/Tour-of-Britain-001.jpg"
-              data-total="16" data-width="732" id="js-gallery-item-3">
+              data-total="16" data-width="732">
                   <p class="caption box-indent">Here's the man many people have
                   come to see - Mark Cavendish. The green jersey winner at this
                   year's Tour de France is top of the sprint classification in
@@ -390,11 +412,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-4 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352702441/Tour-of-Britain-008.jpg'
               data-image="false" data-index="4" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352702441/Tour-of-Britain-008.jpg"
-              data-total="16" data-width="721" id="js-gallery-item-4">
+              data-total="16" data-width="721">
                   <p class="caption box-indent">This rainbow coloured saddle
                   belongs to the current road-race world champion Thor Hushovd.
                   He's entitled to wear it for one more week until he defends his
@@ -404,11 +426,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-5 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352698761/Tour-of-Britain-005.jpg'
               data-image="false" data-index="5" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352698761/Tour-of-Britain-005.jpg"
-              data-total="16" data-width="760" id="js-gallery-item-5">
+              data-total="16" data-width="760">
                   <p class="caption box-indent">Alex Dowsett of Team Sky passes
                   the finish-line with by far the best time thus far - 10 minutes
                   14 seconds</p>
@@ -417,11 +439,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-6 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352697669/Tour-of-Britain-004.jpg'
               data-image="false" data-index="6" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352697669/Tour-of-Britain-004.jpg"
-              data-total="16" data-width="752" id="js-gallery-item-6">
+              data-total="16" data-width="752">
                   <p class="caption box-indent">Michael Rogers of Team Sky
                   prepares in the start hut</p>
 
@@ -429,11 +451,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-7 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352695566/Tour-of-Britain-002.jpg'
               data-image="false" data-index="7" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352695566/Tour-of-Britain-002.jpg"
-              data-total="16" data-width="721" id="js-gallery-item-7">
+              data-total="16" data-width="721">
                   <p class="caption box-indent">Meanwhile, members of the Sigma
                   Sport team warm up</p>
 
@@ -441,11 +463,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-8 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352696597/Tour-of-Britain-003.jpg'
               data-image="false" data-index="8" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316352696597/Tour-of-Britain-003.jpg"
-              data-total="16" data-width="756" id="js-gallery-item-8">
+              data-total="16" data-width="756">
                   <p class="caption box-indent">The overall Tour of Britain
                   leader, Lars Boom, sets off last and is only one second down on
                   Dowsett at the intermediate split, but come the finish-line he
@@ -458,11 +480,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-9 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371064041/Tour-of-Britain-008.jpg'
               data-image="false" data-index="9" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371064041/Tour-of-Britain-008.jpg"
-              data-total="16" data-width="725" id="js-gallery-item-9">
+              data-total="16" data-width="725">
                   <p class="caption box-indent">The final stage is a ten-lap
                   circuit race around the streets of the capital. Boom, wearing
                   the yellow jersey, turns through Parliament Square in a strong
@@ -472,11 +494,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-10 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371062832/Tour-of-Britain-007.jpg'
               data-image="false" data-index="10" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371062832/Tour-of-Britain-007.jpg"
-              data-total="16" data-width="721" id="js-gallery-item-10">
+              data-total="16" data-width="721">
                   <p class="caption box-indent">The peloton speed past Horse
                   Guards Parade</p>
 
@@ -484,11 +506,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-11 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371061677/Tour-of-Britain-006.jpg'
               data-image="false" data-index="11" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371061677/Tour-of-Britain-006.jpg"
-              data-total="16" data-width="760" id="js-gallery-item-11">
+              data-total="16" data-width="760">
                   <p class="caption box-indent">And along embankment - it's quite
                   a scenic stage, this</p>
 
@@ -496,22 +518,22 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-12 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371058942/Tour-of-Britain-004.jpg'
               data-image="false" data-index="12" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371058942/Tour-of-Britain-004.jpg"
-              data-total="16" data-width="743" id="js-gallery-item-12">
+              data-total="16" data-width="743">
                   <p class="caption box-indent">Down they head into a tunnel</p>
 
                   <p class="caption-credit box-indent"><strong>Tom Jenkins for
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-13 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371060335/Tour-of-Britain-005.jpg'
               data-image="false" data-index="13" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371060335/Tour-of-Britain-005.jpg"
-              data-total="16" data-width="712" id="js-gallery-item-13">
+              data-total="16" data-width="712">
                   <p class="caption box-indent">Team Sky lead the chasing peloton
                   through Blackfriars tunnel</p>
 
@@ -519,11 +541,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-14 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371057644/Tour-of-Britain-003.jpg'
               data-image="false" data-index="14" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371057644/Tour-of-Britain-003.jpg"
-              data-total="16" data-width="760" id="js-gallery-item-14">
+              data-total="16" data-width="760">
                   <p class="caption box-indent">But it's the HTC rider Mark
                   Renshaw who funnels his team-mate, Cavendish, into a winning
                   position on the final straight</p>
@@ -532,11 +554,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-15 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371055090/Tour-of-Britain-001.jpg'
               data-image="false" data-index="15" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371055090/Tour-of-Britain-001.jpg"
-              data-total="16" data-width="760" id="js-gallery-item-15">
+              data-total="16" data-width="760">
                   <p class="caption box-indent">Cavendish duly obliges by winning
                   the stage with a powerful sprint-finish</p>
 
@@ -544,11 +566,11 @@
                   The Guardian</strong></p>
               </li>
 
-              <li class="is-off" data-fullsrc=
+              <li class="js-gallery-item-16 is-off" data-fullsrc=
               'http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371056378/Tour-of-Britain-002.jpg'
               data-image="false" data-index="16" data-src=
               "http://static.guim.co.uk/sys-images/Guardian/Pix/pictures/2011/9/18/1316371056378/Tour-of-Britain-002.jpg"
-              data-total="16" data-width="730" id="js-gallery-item-16">
+              data-total="16" data-width="730">
                   <p class="caption box-indent">Victory for the Manxman, and a
                   great way to sign off before next weekend's World Champs. The
                   overall Tour victory goes, of course, to Boom by a total margin
@@ -567,6 +589,10 @@
 
 <style data-cache-name="font1" data-cache-file-woff="fonts/font1.woff.12345.js" data-cache-file-ttf="fonts/font1.ttf.12345.js"></style>
 <style data-cache-name="font2" data-cache-file-woff="fonts/font2.woff.12345.js" data-cache-file-ttf="fonts/font2.ttf.12345.js"></style>
+
+<!-- Australia.spec -->
+    <a class="au-test nav__link edition edition-au" data-link-name="switch to au edition" href="#au-link">AUS edition</a>
+    <a class="au-test nav__link edition" data-link-name="switch to us edition" href="#edition-switch">US edition</a>
 
 </body>
 </html>

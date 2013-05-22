@@ -1,58 +1,35 @@
-define(['common', 'reqwest', 'bonzo'], function (common, reqwest, bonzo) {
+define(['common', 'ajax', 'bonzo', 'modules/lazyload'], function (common, ajax, bonzo, lazyLoad) {
 
     function TopStories() {
 
-        // View
+        var self = this;
 
-        this.view = {
+        this.load = function (config, context) {
 
-            render: function (html) {
+            var url = '/top-stories/trails?page-size=10&view=link',
+                container = context.querySelector('.nav-popup-topstories');
 
-                var topstoriesHeader = document.getElementById('topstories-header'),
-                    topstoriesNav = common.$g('.topstories-control');
-
-                topstoriesHeader.innerHTML = '<div class="headline-list box-indent" data-link-name="top-stories">'
-                    + html
-                    + '</div>';
-
-                common.mediator.emit('modules:topstories:render');
-
-                common.mediator.on('modules:control:change:topstories-control-header:true', function(args) {
-                    bonzo(topstoriesHeader).removeClass('is-off');
-                });
-
-                common.mediator.on('modules:control:change', function(args) {
-
-                    var control = args[0],
-                        state = args[1];
-
-                    if (state === false || control !== 'topstories-control-header') {
-                        bonzo(topstoriesHeader).addClass('is-off');
+            if(container) {
+                if (config.pathPrefix) {
+                    url = config.pathPrefix + url;
+                }
+                lazyLoad({
+                    url: url,
+                    container: container,
+                    jsonpCallbackName: 'navigation',
+                    beforeInsert: function (html) {
+                        return '' +
+                            '<h3 class="headline-list__tile type-5">Top stories</h3>' +
+                            '<div class="headline-list headline-list--top box-indent" data-link-name="top-stories">' +
+                                html +
+                            '</div>';
+                    },
+                    success: function (json) {
+                        common.mediator.emit('modules:topstories:loaded');
                     }
-
                 });
 
             }
-
-        };
-
-        // Bindings
-
-        common.mediator.on('modules:topstories:loaded', this.view.render);
-
-        // Model
-
-        this.load = function (config) {
-            var url = config.page.coreNavigationUrl + '/top-stories.json?page-size=10&view=link';
-            return reqwest({
-                    url: url,
-                    type: 'jsonp',
-                    jsonpCallback: 'callback',
-                    jsonpCallbackName: 'navigation',
-                    success: function (json) {
-                        common.mediator.emit('modules:topstories:loaded', [json.html]);
-                    }
-                });
         };
 
     }

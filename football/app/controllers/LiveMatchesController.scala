@@ -1,6 +1,7 @@
 package controllers
 
 import common._
+import conf._
 import feed.{ CompetitionSupport, Competitions }
 import play.api.mvc.{ RequestHeader, Action, Controller }
 import model._
@@ -8,7 +9,8 @@ import org.joda.time.DateMidnight
 import model.Page
 import conf.Configuration
 
-object LiveMatchesController extends Controller with CompetitionLiveFilters with Logging {
+
+object LiveMatchesController extends Controller with CompetitionLiveFilters with Logging with ExecutionContexts {
 
   val page = new Page(Some("http://www.guardian.co.uk/football/matches"), "football/live", "football",
     "Today's matches", "GFE:Football:automatic:live matches") {
@@ -17,7 +19,7 @@ object LiveMatchesController extends Controller with CompetitionLiveFilters with
 
   def renderFor(competitionName: String) = Action { implicit request =>
     Competitions.competitions.find(_.url.endsWith(competitionName)).map { competition =>
-      renderLive(Competitions.withCompetitionFilter(competitionName), Some(competition))
+      renderLive(Competitions.withCompetitionFilter(s"/football/$competitionName"), Some(competition))
     }.getOrElse(NotFound)
   }
 
@@ -25,7 +27,7 @@ object LiveMatchesController extends Controller with CompetitionLiveFilters with
 
     val today = new DateMidnight()
 
-    val blog = LiveBlog(Edition(request, Configuration))
+    val blog: Option[Trail] = LiveBlog(Edition(request))
 
     val matches = Seq(MatchesOnDate(today, competitions.withMatchesOn(today).competitions))
 
@@ -39,12 +41,10 @@ object LiveMatchesController extends Controller with CompetitionLiveFilters with
       filters = filters,
       comp = competition
     )
-
-    Cached(page) {
-      request.getQueryString("callback").map { callback =>
-        JsonComponent(views.html.fragments.matchesList(livePage, livePage.pageType))
-      }.getOrElse(Ok(Compressed(views.html.matches(livePage))))
-    }
+    
+    val htmlResponse = views.html.matches(livePage)
+    val jsonResponse = views.html.fragments.matchesBody(livePage)
+    renderFormat(htmlResponse, jsonResponse, page, Switches.all)
   }
 
   def render() = Action { implicit request =>

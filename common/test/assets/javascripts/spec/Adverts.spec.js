@@ -1,7 +1,14 @@
-define(['common', 'modules/adverts/adverts', 'modules/adverts/iframeadslot', 'modules/detect'], function(common, Adverts, IframeAdSlot, detect) {
+define(['common', 'ajax', 'modules/adverts/adverts', 'modules/adverts/iframeadslot', 'modules/detect', 'modules/storage'], function(common, ajax, Adverts, IframeAdSlot, detect, storage) {
 
     //Ignore audience science for these tests.
-    localStorage.removeItem("gu.ads.audsci");
+    storage.remove("gu.ads.audsci");
+
+    beforeEach(function(){
+        ajax.init({page: {
+            ajaxUrl: "",
+            edition: "UK"
+        }});
+    });
 
     var config = {
         page: {
@@ -15,13 +22,13 @@ define(['common', 'modules/adverts/adverts', 'modules/adverts/iframeadslot', 'mo
         switches: {
             'audienceScience': true
         }
-    }
+    };
 
     window.guardian = {
         userPrefs: {
             isOff: function() { return false; }
         }
-    }
+    };
     
     describe("Iframe advert slots", function() {
 
@@ -36,7 +43,7 @@ define(['common', 'modules/adverts/adverts', 'modules/adverts/iframeadslot', 'mo
 
         afterEach(function() {
             IframeAdSlot.prototype.createIframe = createIframe;
-        })
+        });
 
         it("should generate the correct iframe URL for slow connection", function() {
             detect.getConnectionSpeed = function() { return 'low'; };
@@ -84,20 +91,6 @@ define(['common', 'modules/adverts/adverts', 'modules/adverts/iframeadslot', 'mo
             runs(function() {
                 for (var i = 0, j = adNodes.length; i<j; ++i) {
                     expect(adNodes[i].firstChild.nodeName.toLowerCase()).toBe('iframe');
-                }
-            });
-        });
-
-        it("should not create ads if userPref is switchedOff", function() {
-
-            window.localStorage['gu.prefs.switch.adverts'] = false;
-
-            Adverts.init(config);
-            Adverts.loadAds();
-
-            runs(function() {
-                for (var i = 0, j = adNodes.length; i<j; ++i) {
-                    expect(adNodes[i].firstChild).toBe(null);
                 }
             });
         });

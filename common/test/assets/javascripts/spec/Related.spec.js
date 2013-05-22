@@ -1,21 +1,33 @@
-define(['common', 'modules/related'], function(common, Related) {
+define(['common', 'ajax', 'modules/related'], function(common, ajax, Related) {
 
     describe("Related", function() {
        
-        var callback;
+        var callback, appendTo;
 
         beforeEach(function() {
-            callback = sinon.spy(function(){});
+            ajax.init({page: {
+                ajaxUrl: "",
+                edition: "UK"
+            }});
+            callback = sinon.stub();
             common.mediator.on('modules:related:loaded', callback);
+        });
+
+        afterEach(function() {
+            if (appendTo) appendTo.innerHTML = "";
         });
 
         // json test needs to be run asynchronously 
         it("should request the related links and graft them on to the dom", function(){
             
-            appendTo = document.getElementById('related-1');
-            
+            appendTo = document.querySelector('.js-related');
+
             runs(function() {
-                var r = new Related(appendTo, { relatedContent : true }).load('fixtures/json');
+                new Related(
+                    {switches: {relatedContent: true}, page: {}}, 
+                    document,
+                    'fixtures/json'
+                );
             });
 
             waits(500);
@@ -29,18 +41,19 @@ define(['common', 'modules/related'], function(common, Related) {
         // json test needs to be run asynchronously
         it("should not request related links if switched off", function(){
 
-            appendTo.innerHTML = ""
-
-            appendTo = document.getElementById('related-1');
+            appendTo = document.querySelector('.js-related');
 
             runs(function() {
-                var r = new Related(appendTo, { relatedContent : false }).load('fixtures/json');
+                new Related(
+                    {switches: {relatedContent: false}, page: {}}, 
+                    document,
+                    'fixtures/json'
+                );
             });
 
             waits(500);
 
             runs(function(){
-
                 expect(appendTo.innerHTML).toBe('');
             });
         });
@@ -50,4 +63,4 @@ define(['common', 'modules/related'], function(common, Related) {
         });
     
     });
-})
+});

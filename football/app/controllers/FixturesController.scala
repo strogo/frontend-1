@@ -1,6 +1,7 @@
 package controllers
 
 import common._
+import conf._
 import feed.{ CompetitionSupport, Competitions }
 import play.api.mvc.{ RequestHeader, Action, Controller }
 import model._
@@ -10,6 +11,7 @@ import org.scala_tools.time.Imports._
 import model.Page
 import scala.Some
 import play.api.templates.Html
+
 
 trait FixtureRenderer extends Controller with CompetitionFixtureFilters {
 
@@ -44,20 +46,22 @@ trait FixtureRenderer extends Controller with CompetitionFixtureFilters {
       filters = filters,
       comp = comp
     )
-
+    
     Cached(page) {
       request.getQueryString("callback").map { callback =>
         JsonComponent(
-          "html" -> views.html.fragments.matchesList(fixturesPage),
+          fixturesPage.page,
+          Switches.all,
+          "html" -> views.html.fragments.matchesBody(fixturesPage),
           "more" -> Html(nextPage.getOrElse("")))
-      }.getOrElse(Ok(Compressed(views.html.matches(fixturesPage))))
+      }.getOrElse(Ok(views.html.matches(fixturesPage)))
     }
   }
 
   def toNextPreviousUrl(date: DateMidnight, competitionFilter: Option[String]): String
 }
 
-object FixturesController extends FixtureRenderer with Logging {
+object FixturesController extends FixtureRenderer with Logging with ExecutionContexts {
 
   val page = new Page(
     Some("http://www.guardian.co.uk/football/matches"),
@@ -107,7 +111,7 @@ object CompetitionFixturesController extends FixtureRenderer with Logging {
       Some("http://www.guardian.co.uk/football/matches"),
       "football/fixtures",
       "football",
-      competition.fullName + " fixtures",
+      s"${competition.fullName} fixtures",
       "GFE:Football:automatic:competition fixtures"
     )
 
@@ -137,16 +141,16 @@ object TeamFixturesController extends Controller with Logging with CompetitionFi
       val upcomingFixtures = fixtures.filter(_.fixture.date >= startDate)
 
       val page = new Page(
-        Some("http://www.guardian.co.uk/football/" + teamName + "/fixtures"),
-        "football/" + teamName + "/fixtures",
+        Some(s"http://www.guardian.co.uk/football/$teamName/fixtures"),
+        s"football/$teamName/fixtures",
         "football",
-        team.name + " fixtures",
+        s"${team.name} fixtures",
         "GFE:Football:automatic:team fixtures"
       )
 
       Cached(60) {
         val html = views.html.teamFixtures(page, filters, upcomingFixtures)
-        Ok(Compressed(html))
+        Ok(html)
       }
     }.getOrElse(NotFound)
   }
@@ -159,17 +163,10 @@ object TeamFixturesController extends Controller with Logging with CompetitionFi
 
       val previousResult = fixtures.filter(_.fixture.date <= startDate).takeRight(1)
       val upcomingFixtures = fixtures.filter(_.fixture.date >= startDate).take(2)
-
-      Cached(60) {
-        val html = views.html.fragments.teamFixtures(team, previousResult, upcomingFixtures)
-        request.getQueryString("callback").map { callback =>
-          JsonComponent(html)
-        } getOrElse {
-          Cached(60) {
-            Ok(Compressed(html))
-          }
-        }
-      }
+      
+    
+      val html = views.html.fragments.teamFixtures(team, previousResult, upcomingFixtures)
+      renderFormat(html, html, 60)
     }.getOrElse(NotFound)
   }
 }

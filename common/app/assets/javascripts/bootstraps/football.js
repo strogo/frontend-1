@@ -2,7 +2,7 @@
 define([
     //Common libraries
     "common",
-    "qwery",
+    "bonzo",
     //Modules
     "modules/router",
     "modules/togglepanel",
@@ -15,7 +15,7 @@ define([
     "modules/matchnav"
 ], function (
     common,
-    qwery,
+    bonzo,
     Router,
     TogglePanel,
     Expandable,
@@ -28,75 +28,88 @@ define([
 ) {
 
     var modules = {
-        matchNav: function(config){
+        matchNav: function(config, context){
             if (config.page.footballMatch) {
                 var url =  "/football/api/match-nav/" + config.page.footballMatch.id;
                     url += "?currentPage=" + encodeURIComponent(config.page.pageId);
-                new MatchNav().load(url);
+                new MatchNav().load(url, context);
             }
         },
 
-        initTogglePanels: function () {
-            TogglePanel.init();
+        showFrontFixtures: function(context) {
+            var prependTo = context.querySelector('.trailblock ul > li'),
+                table;
+            if(!bonzo(prependTo).hasClass('footballfixtures-loaded')) {
+                bonzo(prependTo).addClass('footballfixtures-loaded');
+                table = new FootballFixtures({
+                    prependTo: prependTo,
+                    contextual: false,
+                    expandable: true,
+                    numVisible: 10
+                }).init();
+            }
         },
 
-        showFrontFixtures: function() {
-            common.mediator.on('modules:footballfixtures:expand', function(id) {
-                var expandable = new Expandable({ id: id, expanded: false });
-                expandable.init();
-            });
-            var table = new FootballFixtures({
-                prependTo: qwery('ul > li', '.trailblock')[1],
-                contextual: false,
-                expandable: true,
-                numVisible: 10
-            }).init();
+        showMoreMatches: function(context) {
+            MoreMatches.init(context.querySelector('.js-matches-nav'));
+            TogglePanel.init(context);
         },
 
-        showMoreMatches: function() {
-            var matchesNav = document.getElementById('js-matches-nav');
-            MoreMatches.init(matchesNav);
-        },
-
-        showCompetitionData: function(competition) {
+        showCompetitionData: function(competition, context) {
             common.mediator.on('modules:footballfixtures:render', function(){
-                var title = document.querySelector('.football-table-link');
+                var title = context.querySelector('.football-table-link');
                 if(title) { title.className = "js-hidden"; }
             });
 
             var todaysFixtures = new FootballFixtures({
-                prependTo: document.querySelector('.t2'),
+                prependTo: context.querySelector('.t2'),
                 competitions: [competition],
                 contextual: true,
                 expandable: false
             }).init();
 
             var table = new FootballTable({
-                prependTo: document.querySelector('.t3'),
+                prependTo: context.querySelector('.t3'),
                 competition: competition
             }).init();
         },
 
-        showTeamData: function(team) {
+        showTeamData: function(team, context) {
             var fixtures = new FootballFixtures({
-                prependTo: document.querySelector('.t2'),
+                prependTo: context.querySelector('.t2'),
                 path: '/football/api/teamfixtures/' + team,
                 expandable: false
             }).init();
 
             var table = new FootballTable({
-                prependTo: document.querySelector('.t3'),
+                prependTo: context.querySelector('.t3'),
                 path: '/football/api/teamtable/' + team
             }).init();
         },
 
-        initAutoUpdate: function(container, switches) {
+        initAutoUpdate: function(container, switches, responseSelector) {
             var a = new AutoUpdate({
                 path: window.location.pathname,
                 delay: 10000,
                 attachTo: container,
-                switches: switches
+                switches: switches,
+                responseSelector: responseSelector
             }).init();
+        },
+
+        showHomescreen: function(config) {
+            if (config.switches.homescreen) {
+                require(['homescreen'], function(homescreen){
+                    homescreen({
+                        expire: 60, // minutes until the popup is offered again (unless they've clicked on Close)
+                        returningVisitor: true, // Offer it only on a return visit
+                        animationIn: 'fade',
+                        animationOut: 'fade',
+                        touchIcon: true,
+                        message: 'Add this to your %device by tapping %icon then <strong>Add to Home Screen</strong>'
+                    });
+                });
+            }
         }
     };
 
@@ -107,68 +120,66 @@ define([
         });
     };
 
-    var ready = function(req, config) {
+    var ready = function(req, config, context) {
+        common.lazyLoadCss('football', config);
 
         var page = req.params.action;
 
         switch(page) {
             case undefined :
-                modules.showFrontFixtures();
-                break;
-            case 'fixtures':
-                modules.showMoreMatches();
-                modules.initTogglePanels();
-                break;
-            case 'results':
-                modules.showMoreMatches();
-                modules.initTogglePanels();
+                modules.showFrontFixtures(context);
                 break;
             case 'live':
-                modules.showMoreMatches();
-                modules.initTogglePanels();
-                if (qwery('.match.live-match').length > 0) {
-                    modules.initAutoUpdate(qwery(".matches-container")[0], config.switches);
+                modules.showMoreMatches(context);
+                if (context.querySelector('.match.live-match')) {
+                    modules.initAutoUpdate(context.querySelector('.matches-container'), config.switches, '.matches-container > *');
                 }
                 break;
+            case 'fixtures':
+                modules.showMoreMatches(context);
+                break;
+            case 'results':
+                modules.showMoreMatches(context);
+                break;
             case 'table':
-                modules.showMoreMatches();
-                modules.initTogglePanels();
+                modules.showMoreMatches(context);
                 break;
             case 'tables':
-                modules.showMoreMatches();
-                modules.initTogglePanels();
+                modules.showMoreMatches(context);
                 break;
             default:
                 var comp = config.referenceOfType('paFootballCompetition'),
                     team = config.referenceOfType('paFootballTeam');
 
                 if(comp) {
-                    modules.showCompetitionData(comp);
+                    modules.showCompetitionData(comp, context);
                 }
                 if(team) {
-                    modules.showTeamData(team);
+                    modules.showTeamData(team, context);
                 }
                 if(config.page.footballMatch){
                     var match = config.page.footballMatch;
 
-                    modules.matchNav(config);
+                    modules.matchNav(config, context);
 
                     if(match.isLive) {
                         modules.initAutoUpdate(
                             {
-                                "summary"   : qwery('.match-summary')[0],
-                                "stats"     : qwery('.match-stats')[0]
+                                "summary"   : context.querySelector('.match-summary'),
+                                "stats"     : context.querySelector('.match-stats')
                             },
                             config.switches,
-                            true
+                            {
+                                "summary"   : '.match-summary > *',
+                                "stats"     : '.match-stats > *'
+                            }
                         );
                     }
                 }
-
-
-
                 break;
         }
+    
+        modules.showHomescreen(config);
     };
 
     return {

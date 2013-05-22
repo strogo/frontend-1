@@ -1,26 +1,79 @@
-define(['common', 'bonzo'], function (common, bonzo) {
+define([
+    'common',
+    'bonzo',
+    'bean',
+    'modules/detect'
+], function (
+    common,
+    bonzo,
+    bean,
+    detect
+) {
 
     function Sections() {
 
-        this.init = function () {
+        var className = 'is-off',
+            that = this,
+            hasCrossedBreakpoint = detect.hasCrossedBreakpoint(),
+            contexts = {};
 
-            var sectionsHeader = document.getElementById('sections-header'),
-                className = 'is-off';
 
-            common.mediator.on('modules:control:change:sections-control-header:true', function(args) {
-                bonzo(sectionsHeader).removeClass(className);
-            });
-
-            common.mediator.on('modules:control:change', function(args) {
-
-                var control = args[0],
-                    state = args[1];
-
-                if (state === false || control !== 'sections-control-header') {
-                    bonzo(sectionsHeader).addClass(className);
+        this.view = {
+            bindings : function(context) {
+                var id = context.id;
+                
+                if(contexts[id]){
+                    return;
                 }
+                contexts[id] = true;
 
-            });
+                var sectionsHeader = context.querySelector('.nav-popup-sections'),
+                    sectionsNav    = context.querySelector('.nav--global'),
+                    $sectionsHeader = bonzo(sectionsHeader);
+
+                bean.on(window, 'resize', common.debounce(function(e){
+                    hasCrossedBreakpoint(function(layoutMode) {
+
+                        bonzo(sectionsHeader).addClass(className);
+
+                        if(layoutMode !== 'mobile') {
+                            that.view.hideColumns(sectionsHeader, sectionsNav);
+                        } else {
+                            that.view.showColumns(sectionsHeader, sectionsNav);
+                        }
+                    });
+                }, 200));
+
+                if(detect.getLayoutMode() !== 'mobile') {
+                    that.view.hideColumns(sectionsHeader, sectionsNav);
+                }
+            },
+
+            showColumns : function(sectionsHeader, sectionsNav) {
+                common.$g('.nav__item', sectionsHeader).removeClass('h');
+                common.$g('.nav', sectionsHeader).removeClass('nav--stacked').addClass('nav--columns');
+            },
+
+            hideColumns :  function(sectionsHeader, sectionsNav) {
+                common.$g('.nav', sectionsHeader).removeClass('nav--columns').addClass('nav--stacked');
+
+                var visibleItems = [],
+                popupItems = common.$g('.nav__item', sectionsHeader).removeClass('h');
+
+                common.$g('.nav__item', sectionsNav).each(function(e) {
+                    if(bonzo(e).offset().top < 160) {
+                        visibleItems.push(e);
+                    }
+                });
+
+                for(var i=0, l=visibleItems.length; i < l; i++) {
+                    bonzo(popupItems[i]).addClass('h');
+                }
+            }
+        };
+
+        this.init = function (context) {
+            this.view.bindings(context);
         };
      }
 

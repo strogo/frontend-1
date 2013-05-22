@@ -1,7 +1,10 @@
 package common
 
-import akka.dispatch.{ MessageDispatcher, Dispatcher }
-import com.gu.management.{ TextMetric, GaugeMetric, CountMetric, TimingMetric }
+import akka.dispatch.Dispatcher
+import com.gu.management._
+import conf.RequestMeasurementMetrics
+import scala.Some
+import java.lang.management.ManagementFactory
 
 trait TimingMetricLogging extends Logging { self: TimingMetric =>
   override def measure[T](block: => T): T = {
@@ -27,26 +30,9 @@ trait TimingMetricLogging extends Logging { self: TimingMetric =>
   }
 }
 
-object RequestMetrics {
-  object RequestTimingMetric extends TimingMetric(
-    "performance",
-    "requests",
-    "Client requests",
-    "incoming requests to the application"
-  )
-
-  object Request200s extends CountMetric("request-status", "200_ok", "200 Ok", "number of pages that responded 200")
-  object Request50xs extends CountMetric("request-status", "50x_error", "50x Error", "number of pages that responded 50x")
-  object Request404s extends CountMetric("request-status", "404_not_found", "404 Not found", "number of pages that responded 404")
-  object Request30xs extends CountMetric("request-status", "30x_redirect", "30x Redirect", "number of pages that responded with a redirect")
-  object RequestOther extends CountMetric("request-status", "other", "Other", "number of pages that responded with an unexpected status code")
-
-  val all = Seq(RequestTimingMetric, Request200s, Request50xs, Request404s, RequestOther, Request30xs)
-}
-
 object AkkaMetrics extends AkkaSupport {
 
-  class DispatcherInhabitantsMetric(name: String, dispatcher: MessageDispatcher) extends GaugeMetric(
+  class DispatcherInhabitantsMetric(name: String, dispatcher: Dispatcher) extends GaugeMetric(
     "akka",
     "akka_%s_inhabitants" format name,
     "%s inhabitants" format name,
@@ -54,7 +40,7 @@ object AkkaMetrics extends AkkaSupport {
     () => dispatcher.inhabitants
   )
 
-  class DispatcherMailBoxTypeMetric(name: String, dispatcher: MessageDispatcher) extends TextMetric(
+  class DispatcherMailBoxTypeMetric(name: String, dispatcher: Dispatcher) extends TextMetric(
     "akka",
     "akka_%s_mailbox_type" format name,
     "%s mailbox type" format name,
@@ -65,44 +51,58 @@ object AkkaMetrics extends AkkaSupport {
     }
   )
 
-  class DispatcherMaximumThroughputMetric(name: String, dispatcher: MessageDispatcher) extends GaugeMetric(
+  class DispatcherMaximumThroughputMetric(name: String, dispatcher: Dispatcher) extends GaugeMetric(
     "akka",
     "akka_%s_maximum_throughput" format name,
     "%s maximum throughput" format name,
     "Akka %s maximum throughput" format name,
-    () => dispatcher match {
-      case downcast: Dispatcher => downcast.throughput
-      case _ => 0
-    }
+    () => dispatcher.throughput
   )
 
   object Uptime extends GaugeMetric("akka", "akka_uptime", "Akka Uptime", "Akka system uptime in seconds", () => play_akka.uptime())
 
-  object ActionsDispatcherInhabitants extends DispatcherInhabitantsMetric("actions_dispatcher", play_akka.dispatcher.actions)
-  object ActionsDispatcherMailBoxType extends DispatcherMailBoxTypeMetric("actions_dispatcher", play_akka.dispatcher.actions)
-  object ActionsDispatcherMaximumThroughput extends DispatcherMaximumThroughputMetric("actions_dispatcher", play_akka.dispatcher.actions)
+  val dispatcher = executionContext.asInstanceOf[Dispatcher]
 
-  object PromisesDispatcherInhabitants extends DispatcherInhabitantsMetric("promises_dispatcher", play_akka.dispatcher.promises)
-  object PromisesDispatcherMailBoxType extends DispatcherMailBoxTypeMetric("promises_dispatcher", play_akka.dispatcher.promises)
-  object PromisesDispatcherMaximumThroughput extends DispatcherMaximumThroughputMetric("promises_dispatcher", play_akka.dispatcher.promises)
+  object DefaultDispatcherInhabitants extends DispatcherInhabitantsMetric("default_dispatcher", dispatcher)
+  object DefaultDispatcherMailBoxType extends DispatcherMailBoxTypeMetric("default_dispatcher", dispatcher)
+  object DefaultDispatcherMaximumThroughput extends DispatcherMaximumThroughputMetric("default_dispatcher", dispatcher)
 
-  object WebsocketsDispatcherInhabitants extends DispatcherInhabitantsMetric("websockets_dispatcher", play_akka.dispatcher.websockets)
-  object WebsocketsDispatcherMailBoxType extends DispatcherMailBoxTypeMetric("websockets_dispatcher", play_akka.dispatcher.websockets)
-  object WebsocketsDispatcherMaximumThroughput extends DispatcherMaximumThroughputMetric("websockets_dispatcher", play_akka.dispatcher.websockets)
-
-  object DefaultDispatcherInhabitants extends DispatcherInhabitantsMetric("default_dispatcher", play_akka.dispatcher.default)
-  object DefaultDispatcherMailBoxType extends DispatcherMailBoxTypeMetric("default_dispatcher", play_akka.dispatcher.default)
-  object DefaultDispatcherMaximumThroughput extends DispatcherMaximumThroughputMetric("default_dispatcher", play_akka.dispatcher.default)
-
-  val all = Seq(
-    Uptime,
-    ActionsDispatcherInhabitants, ActionsDispatcherMailBoxType, ActionsDispatcherMaximumThroughput,
-    PromisesDispatcherInhabitants, PromisesDispatcherMailBoxType, PromisesDispatcherMaximumThroughput,
-    WebsocketsDispatcherInhabitants, WebsocketsDispatcherMailBoxType, WebsocketsDispatcherMaximumThroughput,
-    DefaultDispatcherInhabitants, DefaultDispatcherMailBoxType, DefaultDispatcherMaximumThroughput
-  )
+  val all = Seq(Uptime, DefaultDispatcherInhabitants, DefaultDispatcherMailBoxType, DefaultDispatcherMaximumThroughput)
 }
 
+object SystemMetrics {
+
+  // divide by 1048576 to convert bytes to MB
+
+  object MaxHeapMemoryMetric extends GaugeMetric("system", "max-heap-memory", "Max heap memory (MB)", "Max heap memory (MB)",
+    () => ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getMax / 1048576
+  )
+
+  object UsedHeapMemoryMetric extends GaugeMetric("system", "used-heap-memory", "Used heap memory (MB)", "Used heap memory (MB)",
+    () => ManagementFactory.getMemoryMXBean.getHeapMemoryUsage.getUsed / 1048576
+  )
+
+  object MaxNonHeapMemoryMetric extends GaugeMetric("system", "max-non-heap-memory", "Max non heap memory (MB)", "Max non heap memory (MB)",
+    () => ManagementFactory.getMemoryMXBean.getNonHeapMemoryUsage.getMax / 1048576
+  )
+
+  object UsedNonHeapMemoryMetric extends GaugeMetric("system", "used-non-heap-memory", "Used non heap memory (MB)", "Used non heap memory (MB)",
+    () => ManagementFactory.getMemoryMXBean.getNonHeapMemoryUsage.getUsed / 1048576
+  )
+
+  val all = Seq(MaxHeapMemoryMetric, UsedHeapMemoryMetric, MaxNonHeapMemoryMetric, UsedNonHeapMemoryMetric)
+}
+
+
+abstract class WsMetric(
+    val group: String, val name: String, val title: String, val description: String,
+    override val master: Option[Metric] = None) extends AbstractMetric[Int] {
+  val `type`: String = "gauge"
+  override def asJson: StatusMetric = super.asJson.copy(value = Some(getValue().toString))
+}
+
+case class DispatchStats(connectionPoolSize: Int, openChannels: Int)
+
 object CommonMetrics {
-  lazy val all = RequestMetrics.all ++ AkkaMetrics.all
+  lazy val all = RequestMeasurementMetrics.asMetrics ++ AkkaMetrics.all ++ SystemMetrics.all
 }

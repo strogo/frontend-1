@@ -1,6 +1,7 @@
 package controllers
 
 import common._
+import conf._
 import feed.{ CompetitionSupport, Competitions }
 import play.api.mvc.{ RequestHeader, Action, Controller }
 import model._
@@ -11,7 +12,8 @@ import model.Page
 import scala.Some
 import play.api.templates.Html
 
-sealed trait ResultsRenderer extends Controller with Logging with CompetitionResultFilters {
+
+sealed trait ResultsRenderer extends Controller with Logging with CompetitionResultFilters with ExecutionContexts {
 
   val daysToDisplay = 3
   val datePattern = DateTimeFormat.forPattern("yyyyMMMdd")
@@ -48,9 +50,11 @@ sealed trait ResultsRenderer extends Controller with Logging with CompetitionRes
     Cached(page) {
       request.getQueryString("callback").map { callback =>
         JsonComponent(
-          "html" -> views.html.fragments.matchesList(resultsPage),
+          resultsPage.page,
+          Switches.all,
+          "html" -> views.html.fragments.matchesBody(resultsPage),
           "more" -> Html(previousPage.getOrElse("")))
-      }.getOrElse(Ok(Compressed(views.html.matches(resultsPage))))
+      }.getOrElse(Ok(views.html.matches(resultsPage)))
     }
   }
 
@@ -108,7 +112,7 @@ object CompetitionResultsController extends ResultsRenderer with Logging {
       Some("http://www.guardian.co.uk/football/matches"),
       "football/results",
       "football",
-      competition.fullName + " results",
+      s"${competition.fullName} results",
       "GFE:Football:automatic:competition results"
     )
     renderResults(
@@ -137,17 +141,16 @@ object TeamResultsController extends Controller with Logging with CompetitionRes
       val upcomingFixtures = fixtures.filter(_.fixture.date <= startDate).reverse
 
       val page = new Page(
-        Some("http://www.guardian.co.uk/" + teamName + "/results"),
-        "/football/" + teamName + "/results",
+        Some(s"http://www.guardian.co.uk/$teamName/results"),
+        s"/football/$teamName/results",
         "football",
-        team.name + " results",
+        s"${team.name} results",
         "GFE:Football:automatic:team results"
       )
-
-      Cached(60) {
-        val html = views.html.teamFixtures(page, filters, upcomingFixtures)
-        Ok(Compressed(html))
-      }
+      
+      val htmlResponse = views.html.teamFixtures(page, filters, upcomingFixtures)
+      val jsonResponse = views.html.fragments.teamFixturesBody(page, filters, upcomingFixtures)
+      renderFormat(htmlResponse, jsonResponse, page, Switches.all)
     }.getOrElse(NotFound)
   }
 }

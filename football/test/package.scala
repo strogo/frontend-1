@@ -1,55 +1,57 @@
 package test
 
-import feed.Competitions
-import play.api.{ Application => PlayApplication }
-import conf.{ FootballStatsPlugin, FootballClient, Configuration }
+import play.api.{Application => PlayApplication, Plugin}
+import conf.{FootballClient, FootballStatsPlugin, Configuration}
 import pa.Http
 import io.Source
-import play.api.Plugin
 import org.joda.time.DateMidnight
-import common._
+import scala.concurrent.Future
+import common.ExecutionContexts
 
-class StubFootballStatsPlugin(app: PlayApplication) extends Plugin {
-  override def onStart() = {
+
+class StubFootballStatsPlugin(app: PlayApplication) extends Plugin with FootballTestData {
+  override def onStart() {
     FootballClient.http = TestHttp
-    Competitions.refreshCompetitionData()
-    Competitions.refreshMatchDay()
-    Competitions.competitionAgents.filter(_.competition.id != "127").foreach { agent =>
-      agent.refresh()
-      agent.await()
-    }
-
-    Competitions.shutDown()
+    loadTestData()
   }
 }
 
 // Stubs data for Football stats integration tests
-object TestHttp extends Http {
+object TestHttp extends Http with ExecutionContexts {
 
   val today = new DateMidnight()
 
-  val base = getClass.getClassLoader.getResource("testdata").getFile + "/"
+  val base = s"${getClass.getClassLoader.getResource("testdata").getFile}/"
 
   def GET(url: String) = {
+
     val fileName = {
       val file = base + (url.replace(Configuration.pa.apiKey, "APIKEY")
-        .replace("http://pads6.pa-sport.com/", "")
+        .replace(s"${Configuration.pa.host}/", "")
         .replace("/", "__"))
 
       // spoof todays date
       file.replace(today.toString("yyyyMMdd"), "20121020")
     }
 
-    // spoof todays date
-    val xml = Source.fromFile(fileName).getLines.mkString.replace("20/10/2012", today.toString("dd/MM/yyyy"))
-
-    pa.Response(200, xml, "ok")
+    try {
+      // spoof todays date
+      val xml = Source.fromFile(fileName).getLines.mkString.replace("20/10/2012", today.toString("dd/MM/yyyy"))
+      Future(pa.Response(200, xml, "ok"))
+    } catch {
+      case t: Throwable => Future(pa.Response(404, "not found", "not found"))
+    }
   }
 }
 
 object `package` {
-  object HtmlUnit extends EditionalisedHtmlUnit {
-    override val testPlugins = Seq(classOf[StubFootballStatsPlugin].getName)
-    override val disabledPlugins = Seq(classOf[FootballStatsPlugin].getName)
+  object HtmlUnit extends EditionalisedHtmlUnit with implicits.Football {
+    override lazy val testPlugins = super.testPlugins ++ Seq(classOf[StubFootballStatsPlugin].getName)
+    override lazy val disabledPlugins = super.disabledPlugins ++ Seq(classOf[FootballStatsPlugin].getName)
   }
+}
+
+object Fake extends FakeApp {
+  override lazy val testPlugins = super.testPlugins ++ Seq(classOf[StubFootballStatsPlugin].getName)
+  override lazy val disabledPlugins = super.disabledPlugins ++ Seq(classOf[FootballStatsPlugin].getName)
 }

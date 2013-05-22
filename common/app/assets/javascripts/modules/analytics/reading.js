@@ -40,8 +40,7 @@ define([
 
         this.getPercentageInViewPort = function(el) {
             var rect = el.getBoundingClientRect(),
-                height = (window.innerHeight || document.body.clientHeight),
-                percent = 0;
+                height = (window.innerHeight || document.body.clientHeight);
 
             if(rect.bottom < 0 || rect.bottom < height) {
                 return 100;
@@ -104,9 +103,8 @@ define([
             });
         };
 
-        common.mediator.on('module:clickstream:click', function(params) {
-            var isSamePage = params[2];
-            if (!isSamePage && params[0].nodeName.toLowerCase() === 'a') {
+        common.mediator.on('module:clickstream:click', function(clickSpec) {
+            if (!clickSpec.samePage) {
                 that.log.call(that);
             }
         });

@@ -3,18 +3,19 @@
   * https://github.com/ded/bonzo
   * License MIT
   */
-(function (name, definition, context) {
+(function (name, context, definition) {
   if (typeof module != 'undefined' && module.exports) module.exports = definition()
-  else if (typeof context['define'] == 'function' && context['define']['amd']) define(name, definition)
+  else if (typeof define == 'function' && define.amd) define(definition)
   else context[name] = definition()
-})('bonzo', function() {
+})('bonzo', this, function() {
   var win = window
     , doc = win.document
     , html = doc.documentElement
     , parentNode = 'parentNode'
-    , query = null // used for setting a selector engine host
     , specialAttributes = /^(checked|value|selected|disabled)$/i
-    , specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i // tags that we have trouble inserting *into*
+      // tags that we have trouble inserting *into*
+    , specialTags = /^(select|fieldset|table|tbody|tfoot|td|tr|colgroup)$/i
+    , simpleScriptTagRe = /\s*<script +src=['"]([^'"]+)['"]>/
     , table = ['<table>', '</table>', 1]
     , td = ['<table><tbody><tr>', '</tr></tbody></table>', 3]
     , option = ['<select>', '</select>', 1]
@@ -64,6 +65,7 @@
     , whitespaceRegex = /\s+/
     , toString = String.prototype.toString
     , unitless = { lineHeight: 1, zoom: 1, zIndex: 1, opacity: 1, boxFlex: 1, WebkitBoxFlex: 1, MozBoxFlex: 1 }
+    , query = doc.querySelectorAll && function (selector) { return doc.querySelectorAll(selector) }
     , trim = String.prototype.trim ?
         function (s) {
           return s.trim()
@@ -72,13 +74,63 @@
           return s.replace(trimReplace, '')
         }
 
+    , getStyle = features.computedStyle
+        ? function (el, property) {
+            var value = null
+              , computed = doc.defaultView.getComputedStyle(el, '')
+            computed && (value = computed[property])
+            return el.style[property] || value
+          }
+        : !(ie && html.currentStyle)
+          ? function (el, property) {
+              return el.style[property]
+            }
+          :
+          /**
+           * @param {Element} el
+           * @param {string} property
+           * @return {string|number}
+           */
+          function (el, property) {
+            var val, value
+            if (property == 'opacity' && !features.opasity) {
+              val = 100
+              try {
+                val = el['filters']['DXImageTransform.Microsoft.Alpha'].opacity
+              } catch (e1) {
+                try {
+                  val = el['filters']('alpha').opacity
+                } catch (e2) {}
+              }
+              return val / 100
+            }
+            value = el.currentStyle ? el.currentStyle[property] : null
+            return el.style[property] || value
+          }
+
+  function isNode(node) {
+    return node && node.nodeName && (node.nodeType == 1 || node.nodeType == 11)
+  }
+
+
+  function normalize(node, host, clone) {
+    var i, l, ret
+    if (typeof node == 'string') return bonzo.create(node)
+    if (isNode(node)) node = [ node ]
+    if (clone) {
+      ret = [] // don't change original array
+      for (i = 0, l = node.length; i < l; i++) ret[i] = cloneNode(host, node[i])
+      return ret
+    }
+    return node
+  }
 
   /**
    * @param {string} c a class name to test
    * @return {boolean}
    */
   function classReg(c) {
-    return new RegExp("(^|\\s+)" + c + "(\\s+|$)")
+    return new RegExp('(^|\\s+)' + c + '(\\s+|$)')
   }
 
 
@@ -169,10 +221,6 @@
     return undefined
   }
 
-  function isNode(node) {
-    return node && node.nodeName && (node.nodeType == 1 || node.nodeType == 11)
-  }
-
 
   /**
    * @param {Bonzo|Array} ar
@@ -200,41 +248,6 @@
         (p == 'float' && (p = features.cssFloat))
       return p ? camelize(p) : null
   }
-
-  var getStyle = features.computedStyle ?
-    function (el, property) {
-      var value = null
-        , computed = doc.defaultView.getComputedStyle(el, '')
-      computed && (value = computed[property])
-      return el.style[property] || value
-    } :
-
-    (ie && html.currentStyle) ?
-
-    /**
-     * @param {Element} el
-     * @param {string} property
-     * @return {string|number}
-     */
-    function (el, property) {
-      if (property == 'opacity' && !features.opasity) {
-        var val = 100
-        try {
-          val = el['filters']['DXImageTransform.Microsoft.Alpha'].opacity
-        } catch (e1) {
-          try {
-            val = el['filters']('alpha').opacity
-          } catch (e2) {}
-        }
-        return val / 100
-      }
-      var value = el.currentStyle ? el.currentStyle[property] : null
-      return el.style[property] || value
-    } :
-
-    function (el, property) {
-      return el.style[property]
-    }
 
   // this insert method is intense
   function insert(target, host, fn, rev) {
@@ -323,6 +336,21 @@
    */
   function setter(el, v) {
     return typeof v == 'function' ? v(el) : v
+  }
+
+  function scroll(x, y, type) {
+    var el = this[0]
+    if (!el) return this
+    if (x == null && y == null) {
+      return (isBody(el) ? getWindowScroll() : { x: el.scrollLeft, y: el.scrollTop })[type]
+    }
+    if (isBody(el)) {
+      win.scrollTo(x, y)
+    } else {
+      x != null && (el.scrollLeft = x)
+      y != null && (el.scrollTop = y)
+    }
+    return this
   }
 
   /**
@@ -543,6 +571,17 @@
         return this.remove()
       }
 
+      /**
+       * @param {Object=} opt_host an optional host scope (primarily used when integrated with Ender)
+       * @return {Bonzo}
+       */
+    , clone: function (opt_host) {
+        var ret = [] // don't change original array
+          , l, i
+        for (i = 0, l = this.length; i < l; i++) ret[i] = cloneNode(opt_host || this, this[i])
+        return bonzo(ret)
+      }
+
       // class management
 
       /**
@@ -601,7 +640,7 @@
           each(c, function (c) {
             if (c) {
               typeof opt_condition !== 'undefined' ?
-                opt_condition ? addClass(el, c) : removeClass(el, c) :
+                opt_condition ? !hasClass(el, c) && addClass(el, c) : removeClass(el, c) :
                 hasClass(el, c) ? removeClass(el, c) : addClass(el, c)
             }
           })
@@ -695,7 +734,7 @@
        * @return {Element|Node}
        */
     , related: function (method) {
-        return this.map(
+        return bonzo(this.map(
           function (el) {
             el = el[method]
             while (el && el.nodeType !== 1) {
@@ -706,7 +745,7 @@
           function (el) {
             return el
           }
-        )
+        ))
       }
 
 
@@ -781,7 +820,11 @@
        * @return {Bonzo|number}
        */
     , offset: function (opt_x, opt_y) {
-        if (typeof opt_x == 'number' || typeof opt_y == 'number') {
+        if (opt_x && typeof opt_x == 'object' && (typeof opt_x.top == 'number' || typeof opt_x.left == 'number')) {
+          return this.each(function (el) {
+            xy(el, opt_x.left, opt_x.top)
+          })
+        } else if (typeof opt_x == 'number' || typeof opt_y == 'number') {
           return this.each(function (el) {
             xy(el, opt_x, opt_y)
           })
@@ -793,19 +836,13 @@
           , width: 0
         }
         var el = this[0]
+          , de = el.ownerDocument.documentElement
+          , bcr = el.getBoundingClientRect()
+          , scroll = getWindowScroll()
           , width = el.offsetWidth
           , height = el.offsetHeight
-          , top = el.offsetTop
-          , left = el.offsetLeft
-        while (el = el.offsetParent) {
-          top = top + el.offsetTop
-          left = left + el.offsetLeft
-
-          if (el != doc.body) {
-            top -= el.scrollTop
-            left -= el.scrollLeft
-          }
-        }
+          , top = bcr.top + scroll.y - Math.max(0, de && de.clientTop, doc.body.clientTop)
+          , left = bcr.left + scroll.x - Math.max(0, de && de.clientLeft, doc.body.clientLeft)
 
         return {
             top: top
@@ -822,7 +859,8 @@
     , dim: function () {
         if (!this.length) return { height: 0, width: 0 }
         var el = this[0]
-          , orig = !el.offsetWidth && !el.offsetHeight ?
+          , de = el.nodeType == 9 && el.documentElement // document
+          , orig = !de && !!el.style && !el.offsetWidth && !el.offsetHeight ?
              // el isn't visible, can't be measured properly, so fix that
              function (t) {
                var s = {
@@ -837,8 +875,12 @@
                })
                return s
             }(this) : null
-          , width = el.offsetWidth
-          , height = el.offsetHeight
+          , width = de
+              ? Math.max(el.body.scrollWidth, el.body.offsetWidth, de.scrollWidth, de.offsetWidth, de.clientWidth)
+              : el.offsetWidth
+          , height = de
+              ? Math.max(el.body.scrollHeight, el.body.offsetHeight, de.scrollHeight, de.offsetHeight, de.clientHeight)
+              : el.offsetHeight
 
         orig && this.first().css(orig)
         return {
@@ -856,12 +898,15 @@
        */
     , attr: function (k, opt_v) {
         var el = this[0]
+          , n
+
         if (typeof k != 'string' && !(k instanceof String)) {
-          for (var n in k) {
+          for (n in k) {
             k.hasOwnProperty(n) && this.attr(n, k[n])
           }
           return this
         }
+
         return typeof opt_v == 'undefined' ?
           !el ? null : specialAttributes.test(k) ?
             stateAttributes.test(k) && typeof el[k] == 'string' ?
@@ -928,10 +973,7 @@
        */
     , remove: function () {
         this.deepEach(clearData)
-
-        return this.each(function (el) {
-          el[parentNode] && el[parentNode].removeChild(el)
-        })
+        return this.detach()
       }
 
 
@@ -954,7 +996,7 @@
        */
     , detach: function () {
         return this.each(function (el) {
-          el[parentNode].removeChild(el)
+          el[parentNode] && el[parentNode].removeChild(el)
         })
       }
 
@@ -977,22 +1019,12 @@
 
   }
 
-  function normalize(node, host, clone) {
-    var i, l, ret
-    if (typeof node == 'string') return bonzo.create(node)
-    if (isNode(node)) node = [ node ]
-    if (clone) {
-      ret = [] // don't change original array
-      for (i = 0, l = node.length; i < l; i++) ret[i] = cloneNode(host, node[i])
-      return ret
-    }
-    return node
-  }
 
   function cloneNode(host, el) {
     var c = el.cloneNode(true)
       , cloneElems
       , elElems
+      , i
 
     // check for existence of an event cloner
     // preferably https://github.com/fat/bean
@@ -1004,25 +1036,10 @@
       cloneElems = host.$(c).find('*')
       elElems = host.$(el).find('*')
 
-      for (var i = 0; i < elElems.length; i++)
+      for (i = 0; i < elElems.length; i++)
         host.$(cloneElems[i]).cloneEvents(elElems[i])
     }
     return c
-  }
-
-  function scroll(x, y, type) {
-    var el = this[0]
-    if (!el) return this
-    if (x == null && y == null) {
-      return (isBody(el) ? getWindowScroll() : { x: el.scrollLeft, y: el.scrollTop })[type]
-    }
-    if (isBody(el)) {
-      win.scrollTo(x, y)
-    } else {
-      x != null && (el.scrollLeft = x)
-      y != null && (el.scrollTop = y)
-    }
-    return this
   }
 
   function isBody(element) {
@@ -1031,6 +1048,13 @@
 
   function getWindowScroll() {
     return { x: win.pageXOffset || html.scrollLeft, y: win.pageYOffset || html.scrollTop }
+  }
+
+  function createScriptFromHtml(html) {
+    var scriptEl = document.createElement('script')
+      , matches = html.match(simpleScriptTagRe)
+    scriptEl.src = matches[1]
+    return scriptEl
   }
 
   /**
@@ -1057,7 +1081,8 @@
     // hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh
     return typeof node == 'string' && node !== '' ?
       function () {
-        var tag = /^\s*<([^\s>]+)/.exec(node)
+        if (simpleScriptTagRe.test(node)) return [createScriptFromHtml(node)]
+        var tag = node.match(/^\s*<([^\s>]+)/)
           , el = doc.createElement('div')
           , els = []
           , p = tag ? tagMap[tag[1].toLowerCase()] : null
@@ -1073,7 +1098,7 @@
         do {
           // tbody special case for IE<8, creates tbody on any empty table
           // we don't want it if we're just after a <thead>, <caption>, etc.
-          if ((!tag || el.nodeType == 1) && (!tb || el.tagName.toLowerCase() != 'tbody')) {
+          if ((!tag || el.nodeType == 1) && (!tb || (el.tagName && el.tagName != 'TBODY'))) {
             els.push(el)
           }
         } while (el = el.nextSibling)
@@ -1123,4 +1148,4 @@
     }
 
   return bonzo
-}, this); // the only line we care about using a semi-colon. placed here for concatenation tools
+}); // the only line we care about using a semi-colon. placed here for concatenation tools

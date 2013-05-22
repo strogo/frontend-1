@@ -1,4 +1,4 @@
-define(['common', 'reqwest', 'bonzo', 'bean'], function (common, reqwest, bonzo, bean) {
+define(['common', 'ajax', 'bonzo', 'bean'], function (common, ajax, bonzo, bean) {
 
     return {
 
@@ -21,31 +21,37 @@ define(['common', 'reqwest', 'bonzo', 'bean'], function (common, reqwest, bonzo,
                     bonzo(element).text(buttonText);
                 });
 
-            common.mediator.on('ui:more-matches:clicked', function (_link) {
+            function clicked(_link) {
                 var link = bonzo(_link);
-                reqwest({
+                ajax({
                     url: link.attr('href'),
                     type: 'jsonp',
                     jsonpCallback: 'callback',
                     jsonpCallbackName: 'moreMatches',
                     success: function (response) {
+                        if (!response) {
+                            common.mediator.emit('module:error', 'Failed to load more matches', 'more-matches.js');
+                            return;
+                        }
+                        // pull out fixtures
+                        var $response = bonzo.create('<div>' + response.html + '</div>'),
+                            $fixtures = common.$g('.matches-container > .competitions-date, .matches-container > .competitions', $response[0]);
                         // place html before nav
-                        bonzo(nav).before(response.html);
+                        bonzo(nav).before($fixtures);
                         // update more link (if there is more)
                         if (response.more) {
                             link.attr('href', response.more);
                         } else {
                             link.remove();
                         }
-                    },
-                    error: function () {
-                        common.mediator('module:error', 'Failed to load more matches', 'more-matches.js');
                     }
                 });
-            });
+            }
+            
+            common.mediator.on('ui:more-matches:clicked', clicked);
 
             bean.add(nav, 'a', 'click', function(e) {
-                common.mediator.emit('ui:more-matches:clicked', [e.target]);
+                clicked(e.target);
                 e.preventDefault();
             });
 

@@ -1,21 +1,25 @@
 define([
     'common',
     'domwrite',
+    'ajax',
     'modules/adverts/document-write',
     'modules/adverts/documentwriteslot',
-    'modules/adverts/dimensionMap'
+    'modules/adverts/dimensionMap',
+    'modules/storage',
     ], function(
         common,
         domwrite,
+        ajax,
         DocumentWrite,
         DocumentWriteSlot,
-        dimensionMap
+        dimensionMap,
+        storage
     )  {
 
     var slots = [
         {name:'Top2'},
         {name:'Bottom2'}
-    ]
+    ];
 
     var config = {
         page: {
@@ -28,11 +32,15 @@ define([
             'pageId': 'environment/2012/foo',
             'audienceScienceUrl': 'http://js.revsci.net/gateway/gw.js?csid=E05516'
         }
-    }
+    };
    
     beforeEach(function(){
-        localStorage.setItem('gu.ads.audsci', '["E012390","E012782"]'); 
-        common.mediator.removeAllListeners();
+        ajax.init({page: {
+            ajaxUrl: "",
+            edition: "UK"
+        }});
+        storage.set('gu.ads.audsci', ["E012390","E012782"]);
+        common.mediator.removeEvent();
     });
  
     // deterministic 'randomness' - http://davidbau.com/archives/2010/01/30/random_seeds_coded_hints_and_quintillions.html 
@@ -78,25 +86,25 @@ define([
             });
 
             waitsFor(function(){
-                return (window.admeld_url != undefined) // variable evaluated in fixtures 
-            }, "window.admeld_url never evaluated", 1000)
+                return (window.admeld_url != undefined); // variable evaluated in fixtures
+            }, "window.admeld_url never evaluated", 1000);
             
             runs(function(){ 
-                expect(window.admeld_url).toBeTruthy()
+                expect(window.admeld_url).toBeTruthy();
                 //expect(document.getElementById('advert-via-doc-write')).toBeTruthy()
             })
         });
         
         xit("Pass audience science tags to the OAS", function() {
             
-            var d = DocumentWrite.load('fixtures/oas');
+            DocumentWrite.load('fixtures/oas');
              
             waitsFor(function(){
-                return (window.admeld_url != undefined) // variable evaluated in fixtures 
-            }, "window.admeld_url never evaluated", 1000)
+                return (window.admeld_url != undefined); // variable evaluated in fixtures
+            }, "window.admeld_url never evaluated", 1000);
             
             runs(function(){ 
-                expect(window.admeld_url).toBeTruthy()
+                expect(window.admeld_url).toBeTruthy();
                 expect(document.getElementById('advert-via-doc-write')).toBeTruthy()
             })
         });

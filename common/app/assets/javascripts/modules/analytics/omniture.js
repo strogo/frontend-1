@@ -1,15 +1,27 @@
-define(['common', 'modules/detect'], function(common, detect) {
+define([
+    'common',
+    'modules/detect',
+    'modules/experiments/ab',
+    'modules/storage',
+    'components/gu-id/id'
+], function(
+    common,
+    detect,
+    ab,
+    storage,
+    id
+) {
 
     // https://developer.omniture.com/en_US/content_page/sitecatalyst-tagging/c-tagging-overview
 
-	/**
+    /**
      * @param Object w 'window' object, used for testing
      */
-    function Omniture(s, config, w) {
+    function Omniture(s, w) {
 
-        var that = this;
-
-        var storagePrefix = "gu.analytics.";
+        var storagePrefix = "gu.analytics.",
+            config,
+            that = this;
 
         w = w || {};
 
@@ -25,29 +37,26 @@ define(['common', 'modules/detect'], function(common, detect) {
             s.tl(true,'o',"AutoUpdate Refresh");
         };
 
-        this.logTag = function(params) {
-            var element = params[0],
-                tag = params[1],
-                isSamePage = params[2],
-                isSameHost = params[3],
-                storeObj,
+        this.logTag = function(spec) {
+            var storeObj,
                 delay;
 
-            // Remove the 'false' clause once Omniture guys support the localStorage approach...
-            if (false && isSameHost && !isSamePage) {
-                // Came from a link to a new page on the same host.
-                // Do session storage rather than an omniture track.
+            if (!spec.tag) {
+                return;
+            } else if (spec.sameHost && !spec.samePage) {
+                // Came from a link to a new page on the same host,
+                // so do session storage rather than an omniture track.
                 storeObj = {
                     pageName: s.pageName,
-                    tag: tag,
+                    tag: spec.tag,
                     time: new Date().getTime()
                 };
-                localStorage.setItem(storagePrefix + 'referrerVars', JSON.stringify(storeObj));
+                storage.set(storagePrefix + 'referrerVars', storeObj);
             } else {
-                that.populateEventProperties(tag);
+                that.populateEventProperties(spec.tag);
                 // this is confusing: if s.tl() first param is "true" then it *doesn't* delay.
-                delay = isSamePage ? true : element;
-                s.tl(delay, 'o', tag);
+                delay = spec.samePage ? true : spec.target;
+                s.tl(delay, 'o', spec.tag);
             }
         };
 
@@ -55,7 +64,7 @@ define(['common', 'modules/detect'], function(common, detect) {
             s.linkTrackVars = 'eVar37,events';
             s.linkTrackEvents = 'event37';
             s.events = 'event37';
-            s.eVar37 = s.pageType + ':' + tag;
+            s.eVar37 = (config.page.contentType) ? config.page.contentType + ':' + tag : tag;
         };
 
         // used where we don't have an element to pass as a tag
@@ -64,10 +73,9 @@ define(['common', 'modules/detect'], function(common, detect) {
             s.linkTrackVars = 'eVar37,events';
             s.linkTrackEvents = 'event37';
             s.events = 'event37';
-            s.eVar37 = s.pageType + ':' + tagStr;
+            s.eVar37 = (config.page.contentType) ? config.page.contentType + ':' + tagStr : tagStr;
             s.tl(true, 'o', tagStr);
         };
-
 
         this.populatePageProperties = function() {
 
@@ -83,7 +91,7 @@ define(['common', 'modules/detect'], function(common, detect) {
             s.prop3     = config.page.publication || '';
             s.prop9     = config.page.contentType || '';  //contentType
 
-            s.channel   = config.page.section || '';
+            s.channel   = (config.page.contentType === "Network Front") ? "Network Front" : config.page.section || '';
             s.prop4     = config.page.keywords || '';
             s.prop6     = config.page.author || '';
             s.prop7     = config.page.webPublicationDate || '';
@@ -100,13 +108,32 @@ define(['common', 'modules/detect'], function(common, detect) {
             s.prop19     = platform;
             s.eVar19     = platform;
 
-            s.prop31    = 'Guest user';
+            s.prop31    = id.isLoggedIn() ? "Logged in user" : "Guest user";
 
             s.prop47    = config.page.edition || '';
 
-            s.prop48    = detect.getConnectionSpeed(w.performance);
+            if (ab.inTest(config.switches)) {
+                var test = ab.getTest(),
+                    testData = 'AB | ' + test.id + ' | ' + test.variant;
+
+                s.prop51  = testData;
+                s.eVar51  = testData;
+                s.events = s.apl(s.events,'event58',',');
+            } else {
+                // If no other tests running try and collect AB font rendering test results.
+                var fonttest = localStorage.getItem('gu.fontdelaytest');
+                if(fonttest) {
+                    s.prop51  = fonttest;
+                    s.eVar51  = fonttest;
+                    s.events = s.apl(s.events,'event58',',');
+                }
+            }
 
             s.prop56    = 'Javascript';
+
+            s.prop65    = config.page.headline || '';
+
+            s.prop68    = detect.getConnectionSpeed(w.performance, null, true);
 
             if (config.page.webPublicationDate) {
                 s.prop30 = 'content';
@@ -114,38 +141,66 @@ define(['common', 'modules/detect'], function(common, detect) {
                 s.prop30 = 'non-content';
             }
 
+            if (window.location.hash === '#popup:homescreen') {
+                s.eVar38 = 'popup:homescreen';
+            }
+
+            /* Retrieve navigation interaction data, incl. swipe */
+            var ni = storage.get('gu.analytics.referrerVars');
+            if (ni) {
+                var d = new Date().getTime();
+                if (d - ni.time < 60 * 1000) { // One minute
+                    s.eVar24 = ni.pageName;
+                    s.eVar37 = ni.tag;
+                    s.events   = 'event37';
+                }
+                storage.remove('gu.analytics.referrerVars');
+            } else if (config.swipe) {
+                s.referrer = config.swipe.referrer;
+                s.eVar24   = config.swipe.referrerPageName;
+                s.eVar37   = config.swipe.initiatedBy;
+                s.events   = 'event37';
+            }
         };
 
-        this.init = function() {
+        this.loaded = function(callback) {
+            this.populatePageProperties();
+            this.logView();
+            if (typeof callback === 'function') {
+                callback();
+            }
+        };
+
+        this.go = function(c, callback) {
+            var that = this;
+
+            config = c; // update the module-wide config
 
             // must be set before the Omniture file is parsed
             window.s_account = config.page.omnitureAccount;
 
-            var that = this;
-
             // if the omniture object was not injected in to the constructor
             // use the global 's' object
-
-            if (s !== null) {
-                that.populatePageProperties();
-                that.logView();
-                common.mediator.on('module:clickstream:click', that.logTag );
+            if (window.s) {
+                s = window.s;
+                that.loaded(callback);
             } else {
-                require(['js!omniture'], function(placeholder){
+                var dependOn = ['js!omniture'];
+                require(dependOn, function(placeholder){
                     s = window.s;
-                    that.populatePageProperties();
-                    that.logView();
-                    common.mediator.on('module:clickstream:click', that.logTag );
+                    that.loaded(callback);
                 });
             }
-
-            common.mediator.on('module:autoupdate:loaded', function() {
-                that.populatePageProperties();
-                that.logUpdate();
-            });
-
-            common.mediator.on('module:clickstream:interaction', that.trackNonLinkEvent );
         };
+
+        common.mediator.on('module:clickstream:interaction', that.trackNonLinkEvent );
+
+        common.mediator.on('module:clickstream:click', that.logTag );
+
+        common.mediator.on('module:autoupdate:loaded', function() {
+            that.populatePageProperties();
+            that.logUpdate();
+        });
 
     }
 

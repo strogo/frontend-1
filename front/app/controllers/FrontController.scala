@@ -1,17 +1,17 @@
 package controllers
 
 import common._
-import conf._
+import conf.CommonSwitches.AustraliaFrontSwitch
 import front._
 import model._
+import conf._
 import play.api.mvc._
-import play.api.libs.concurrent.Akka
-import play.api.Play.current
 import model.Trailblock
 import scala.Some
-import com.gu.openplatform.contentapi.model.ItemResponse
 
-object FrontPage extends MetaData {
+import concurrent.Future
+
+object NetworkFrontPage extends MetaData {
   override val canonicalUrl = Some("http://www.guardian.co.uk")
   override val id = ""
   override val section = ""
@@ -23,50 +23,110 @@ object FrontPage extends MetaData {
   )
 }
 
-class FrontController extends Controller with Logging with Formats {
+object AustraliaNetworkFrontPage extends MetaData {
+  override val canonicalUrl = Some("http://www.guardian.co.uk/australia")
+  override val id = "australia"
+  override val section = "australia"
+  override val webTitle = "The Guardian"
+  override lazy val analyticsName = "GFE:Network Front"
+
+  override lazy val metaData: Map[String, Any] = super.metaData ++ Map(
+    "content-type" -> "Network Front"
+  )
+}
+
+object SportFrontPage extends MetaData {
+  override val canonicalUrl = Some("http://www.guardian.co.uk/sport")
+  override val id = "sport"
+  override val section = "sport"
+  override val webTitle = "Sport"
+  override lazy val analyticsName = "GFE:sport"
+
+  override lazy val metaData: Map[String, Any] = super.metaData ++ Map(
+    "keywords" -> "Sport",
+    "content-type" -> "Section"
+  )
+}
+
+object CultureFrontPage extends MetaData {
+  override val canonicalUrl = Some("http://www.guardian.co.uk/culture")
+  override val id = "culture"
+  override val section = "culture"
+  override val webTitle = "Culture"
+  override lazy val analyticsName = "GFE:culture"
+
+  override lazy val metaData: Map[String, Any] = super.metaData ++ Map(
+    "keywords" -> "Culture",
+    "content-type" -> "Section"
+  )
+}
+
+
+class FrontController extends Controller with Logging with JsonTrails with ExecutionContexts {
 
   val front: Front = Front
 
-  val validFormats: Seq[String] = Seq("html", "json")
-
   def warmup() = Action {
-    val promiseOfWarmup = Akka.future(Front.warmup())
-    Async { promiseOfWarmup.map(warm => Ok("warm")) }
+    val promiseOfWarmup = Future(Front.warmup)
+    Async {
+      promiseOfWarmup.map(warm => Ok("warm"))
+    }
   }
 
-  def isUp() = Action { Ok("Ok") }
+  def isUp() = Action {
+    Ok("Ok")
+  }
+  
+  def render(path: String) = Action { implicit request =>
 
-  def render(path: String, format: String = "html") = Action { implicit request =>
-    val edition = Edition(request, Configuration)
+    val edition = Edition(request)
 
-    val page: Option[MetaData] = path match {
-      case "front" => Some(FrontPage)
-      case _ => ContentApi.item(path, edition)
-        .showEditorsPicks(true)
-        .showMostViewed(true)
-        .response.section map { Section(_) }
+    val frontPage: MetaData = path match {
+      case "front" => NetworkFrontPage
+      case "australia" => AustraliaNetworkFrontPage
+      case "sport" => SportFrontPage
+      case "culture" => CultureFrontPage
     }
 
-    page map { page =>
-      // get the trailblocks
-      val trailblocks: Seq[Trailblock] = front(path, edition)
-      if (trailblocks.isEmpty) {
-        InternalServerError
-      } else {
-        checkFormat(format).map { format =>
-          Cached(page) {
-            if (format == "json") {
-              // pull out correct trailblock
-              trailblocks.find(_.description.id == path).map { trailblock =>
-                renderJsonTrails(trailblock.trails)
-              }.getOrElse(InternalServerError)
-            } else {
-              Ok(Compressed(views.html.front(page, trailblocks, FrontCharity())))
-            }
-          }
-        } getOrElse (BadRequest)
-      }
-    } getOrElse (InternalServerError)
+    // get the trailblocks
+    val trailblocks: Seq[Trailblock] = front(path, edition)
+
+    if (frontPage == AustraliaNetworkFrontPage && AustraliaFrontSwitch.isSwitchedOff) {
+      NotFound
+    }
+    else if (trailblocks.isEmpty) {
+      InternalServerError
+    } else {
+      val htmlResponse = views.html.front(frontPage, trailblocks)
+      val jsonResponse = views.html.fragments.frontBody(frontPage, trailblocks)
+      renderFormat(htmlResponse, jsonResponse, frontPage, Switches.all)
+    }
+  }
+  
+  def renderTrails(path: String) = Action { implicit request =>
+
+    val edition = Edition(request)
+
+    val frontPage: MetaData = path match {
+      case "front" => NetworkFrontPage
+      case "australia" => AustraliaNetworkFrontPage
+      case "sport" => SportFrontPage
+      case "culture" => CultureFrontPage
+    }
+
+    // get the first trailblock
+    val trailblock: Option[Trailblock] = front(path, edition).headOption
+
+    if (frontPage == AustraliaNetworkFrontPage && AustraliaFrontSwitch.isSwitchedOff) {
+      NotFound
+    }
+    else if (trailblock.isEmpty) {
+      InternalServerError
+    } else {
+      val trails: Seq[Trail] = trailblock.get.trails
+      val response = views.html.fragments.trailblocks.headline(trails, numItemsVisible = trails.size)
+      renderFormat(response, response, frontPage)
+    }
   }
 
 }

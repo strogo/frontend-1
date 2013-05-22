@@ -1,6 +1,5 @@
 define([
     'common',
-    'reqwest',
     'domwrite',
     'qwery',
     'bonzo',
@@ -10,11 +9,11 @@ define([
     'modules/adverts/document-write',
     'modules/adverts/documentwriteslot',
     'modules/adverts/dimensionMap',
-    'modules/adverts/audience-science'
+    'modules/adverts/audience-science',
+    'modules/adverts/quantcast'
 ],
 function (
     common,
-    reqwest,
     domwrite,
     qwery,
     bonzo,
@@ -24,64 +23,84 @@ function (
     documentWrite,
     DocumentWriteSlot,
     dimensionMap,
-    audienceScience
+    audienceScience,
+    quantcast
 ) {
     
-    var config,
-        adsSwitchedOn,
-        audienceScienceSegments,
-        slots;
+    var currConfig,
+        currContext,
+        slots,
+        contexts = {};
 
-    function init(c) {
-        config = c;
-        slots = [];
+    function init(config, context) {
+        var id = context.id;
 
-        generateMiddleSlot(config);
+        if(id) {
 
-        var slotHolders = document.querySelectorAll('.ad-slot'),
-            size = (window.innerWidth > 810) ? 'median' : 'base';
+            contexts[id] = context;
+            currConfig  = config;
+            currContext = context;
+            slots = [];
 
-        adsSwitchedOn = !userPrefs.isOff('adverts');
+            var size = (window.innerWidth > 810) ? 'median' : 'base';
 
-        // Run through slots and create documentWrite for each.
-        // Other ad types suchas iframes and custom can be plugged in here later
-        if (adsSwitchedOn) {
-            for(var i = 0, j = slotHolders.length; i < j; ++i) {
-                var name = slotHolders[i].getAttribute('data-' + size);
-                var slot = new DocumentWriteSlot(name, slotHolders[i].querySelector('.ad-container'));
-                slot.setDimensions(dimensionMap[name]);
-                slots.push(slot);
+            // Run through slots and create documentWrite for each.
+            // Other ad types such as iframes and custom can be plugged in here later
+
+            generateMiddleSlot(currConfig);
+            
+            for (var c in contexts) {
+                var els = contexts[c].querySelectorAll('.ad-slot');
+                for(var i = 0, l = els.length; i < l; i += 1) {
+                    var container = els[i].querySelector('.ad-container'),
+                        name,
+                        slot;
+                    // Empty all ads in the dom
+                    container.innerHTML = '';
+                    // Load the currContext ads only
+                    if (contexts[c] === currContext ) {
+                        name = els[i].getAttribute('data-' + size),
+                        slot = new DocumentWriteSlot(name, container);
+                        slot.setDimensions(dimensionMap[name]);
+                        slots.push(slot);
+                    }
+                }
             }
-            if (config.switches.audienceScience) {
-                audienceScience.load(config.page);
-            }
+        }
+        
+        if (currConfig.switches.audienceScience) {
+            audienceScience.load(currConfig.page);
+        }
+
+        if (currConfig.switches.quantcast) {
+            quantcast.load();
         }
 
         //Make the request to ad server
         documentWrite.load({
-            config: config,
+            config: currConfig,
             slots: slots
         });
     }
 
     function loadAds() {
+
         domwrite.capture();
-        if (adsSwitchedOn) {
-            //Run through adslots and check if they are on screen. Load if so.
-            for (var i = 0, j = slots.length; i<j; ++i) {
-                //Add && isOnScreen(slots[i].el) to conditional below to trigger lazy loading
-                if (!slots[i].loaded) {
-                    slots[i].render();
-                }
+
+        //Run through adslots and check if they are on screen. Load if so.
+        for (var i = 0, j = slots.length; i<j; ++i) {
+            //Add && isOnScreen(slots[i].el) to conditional below to trigger lazy loading
+            if (!slots[i].loaded && slots[i].el.innerHTML === '') {
+                slots[i].render();
             }
         }
 
         //This is a horrible hack to hide slot if no creative is returned from oas
-        //Check existance of empty tracking pixel
-        if(config.page.pageId === "") {
-            var middleSlot = document.getElementById('ad-slot-middle-banner-ad');
+        //Check existence of empty tracking pixel
+        if(currConfig.page.pageId === "") {
+            var middleSlot = currContext.querySelector('.ad-slot-middle-banner-ad');
 
-            if(middleSlot.innerHTML.indexOf("x55/default/empty.gif")  !== -1) {
+            if(middleSlot && middleSlot.innerHTML.indexOf("x55/default/empty.gif")  !== -1) {
                 bonzo(middleSlot).hide();
             }
         }
@@ -94,13 +113,22 @@ function (
         );
     }
 
-    function generateMiddleSlot(config) {
-        //Temporary middle slot needs better implementation in the future
-        if(config.page.pageId === "") {
-            var slot =  '<div id="ad-slot-middle-banner-ad" data-link-name="ad slot middle-banner-ad"';
-                slot += ' data-base="x55" data-median="x55" class="ad-slot"><div class="ad-container"></div></div>';
+    //Temporary middle slot needs better implementation in the future
+    function generateMiddleSlot() {
+        var slot,
+            prependTo;
 
-            bonzo(qwery('#front-trailblock-commentisfree li')[1]).after(slot);
+        if(currConfig.page.pageId === "") {
+            prependTo = currContext.querySelector('.front-trailblock-commentisfree li');
+
+            if(!bonzo(prependTo).hasClass('middleslot-loaded')) {
+                bonzo(prependTo).addClass('middleslot-loaded');
+
+                slot = '<div class="ad-slot-middle-banner-ad ad-slot" data-link-name="ad slot middle-banner-ad"';
+                slot+= ' data-base="x55" data-median="x55"><div class="ad-container"></div></div>';
+
+                bonzo(prependTo).after(slot);
+            }
         }
     }
 

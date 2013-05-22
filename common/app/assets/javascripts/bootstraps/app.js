@@ -1,5 +1,11 @@
 define('bootstraps/app', [
+    "common",
     "domReady",
+    "ajax",
+    'modules/detect',
+    'modules/errors',
+    'modules/fonts',
+    'modules/debug',
     "modules/router",
     "bootstraps/common",
     "bootstraps/front",
@@ -7,56 +13,107 @@ define('bootstraps/app', [
     "bootstraps/article",
     "bootstraps/video",
     "bootstraps/gallery",
+    "bootstraps/story",
     "modules/pageconfig"
 ], function (
+    common,
     domReady,
+    ajax,
+    detect,
+    Errors,
+    Fonts,
+    Debug,
     Router,
-    Common,
+    bootstrapCommon,
     Front,
     Football,
     Article,
     Video,
     Gallery,
+    Story,
     pageConfig
 ) {
 
-    var routes = function(rawConfig) {
+    var modules = {
 
+        initialiseAjax: function(config) {
+            ajax.init(config);
+        },
+
+        attachGlobalErrorHandler: function (config) {
+            var e = new Errors({
+                window: window,
+                isDev: config.page.isDev
+            });
+            e.init();
+            common.mediator.on("module:error", e.log);
+        },
+
+        loadFonts: function(config, ua) {
+            if(config.switches.webFonts) {
+                var fileFormat = detect.getFontFormatSupport(ua),
+                    fontStyleNodes = document.querySelectorAll('[data-cache-name].initial');
+                var f = new Fonts(fontStyleNodes, fileFormat);
+                f.loadFromServerAndApply();
+            }
+        },
+
+        showDebug: function () {
+            new Debug().show();
+        }
+    };
+
+    var routes = function(rawConfig) {
         var config = pageConfig(rawConfig);
 
         domReady(function() {
-            var r = new Router();
+            var context = document.getElementById('preload-1');
 
-            //Init all common modules first
-            Common.init(config);
+            modules.initialiseAjax(config);
+            modules.attachGlobalErrorHandler(config);
+            modules.loadFonts(config, navigator.userAgent);
+            modules.showDebug();
 
-            //Fronts
-            r.get('/', function(req) { Front.init(req, config); });
-            r.get('/sport', function(req) { Front.init(req, config); });
-            r.get('/culture', function(req) { Front.init(req, config); });
+            var pageRoute = function(config, context) {
 
-            //Football
-            r.get('/football', function(req) { Football.init(req, config); });
-            r.get('/football/:action', function(req) { Football.init(req, config); });
-            r.get('/football/:action/:year/:month/:day', function(req) { Football.init(req, config); });
-            r.get('/football/:tag/:action', function(req) { Football.init(req, config); });
-            r.get('/football/:tag/:action/:year/:month/:day', function(req) { Football.init(req, config); });
+                // We should rip out this router:
+                var r = new Router();
 
-            //Articles
-            if(config.page.contentType === "Article") {
-                Article.init({url: window.location.pathName}, config);
-            }
+                bootstrapCommon.init(config, context);
 
-            if (config.page.contentType === "Video") {
-                Video.init({url: window.location.pathName}, config);
-            }
+                //Fronts
+                r.get('/', function(req) {        Front.init(config, context); });
+                r.get('/sport', function(req) {   Front.init(config, context); });
+                r.get('/culture', function(req) { Front.init(config, context); });
 
-            if (config.page.contentType === "Gallery") {
-                Gallery.init({url: window.location.pathName}, config);
-            }
+                //Football
+                r.get('/football', function(req) {                                Football.init(req, config, context); });
+                r.get('/football/:action', function(req) {                        Football.init(req, config, context); });
+                r.get('/football/:action/:year/:month/:day', function(req) {      Football.init(req, config, context); });
+                r.get('/football/:tag/:action', function(req) {                   Football.init(req, config, context); });
+                r.get('/football/:tag/:action/:year/:month/:day', function(req) { Football.init(req, config, context); });
 
-            //Kick it all off
-            r.init();
+                r.get('/stories/:id', function(req) { Story.init(config, context);});
+
+                if(config.page.contentType === "Article") {
+                    Article.init(config, context);
+                }
+
+                if (config.page.contentType === "Video") {
+                    Video.init(config, context);
+                }
+
+                if (config.page.contentType === "Gallery") {
+                    Gallery.init(config, context);
+                }
+
+                //Kick it all off
+                r.init();
+            };
+
+            common.mediator.on('page:ready', pageRoute);
+            
+            common.mediator.emit('page:ready', config, context);
         });
     };
 

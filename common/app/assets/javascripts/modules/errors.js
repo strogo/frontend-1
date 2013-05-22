@@ -1,10 +1,16 @@
-define(['common'], function (common) {
+/*global Event:true */
+define(['modules/userPrefs', 'common'], function (userPrefs, common) {
 
-    var Errors = function (w) {
+    var Errors = function (config) {
 
-        var path = '/px.gif',
-            win = w || window,
+        var c = config || {},
+            isDev = (c.isDev !== undefined) ? c.isDev : false,
+            url = "//beacon." + window.location.hostname,
+            path = '/px.gif',
+            cons = c.console || window.console,
+            win = c.window || window,
             body = document.body,
+            prefs = c.userPrefs || userPrefs,
             createImage = function(url) {
                 var image = new Image();
                 image.id = 'js-err';
@@ -12,36 +18,46 @@ define(['common'], function (common) {
                 image.src = url;
                 body.appendChild(image);
             },
-            encode = function(str) { // https://gist.github.com/3912229
-                var encodedStr = encodeURIComponent(str),
-                    table = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
-                for (var bits = '', i = 0; i < str.length; i++) {
-                    bits += ('000' + str.charCodeAt(i).toString(4)).slice(-4);
+            makeUrl = function(properties, isAd) {
+                var query = [];
+                for (var name in properties) {
+                    query.push(name + '=' + encodeURIComponent(properties[name]));
                 }
-                bits += '000'.slice(bits.length % 3 || 3);
-                for (var data = '', j = 0; j < bits.length; ) {
-                    data += table.charAt(parseInt(bits.slice(j, j += 3), 4));
+                return url + path + '?' + ((isAd === true) ? 'ads' : 'js') + '/' + query.join('&');
+            },
+            log = function(message, filename, lineno, isUncaught) {
+                // error events are thrown by script elements
+                if (message.toString() === '[object Event]' && message.target instanceof HTMLScriptElement) {
+                    message = 'Syntax or http error: ' + message.target.src;
                 }
-                return data += '===='.slice(data.length % 4 || 4);
-            },
-            makeUrl = function(properties) {
-                return path + '?js/' + encode(properties.join(','));
-            },
-            log = function(message, filename, lineno) {
-                var url = makeUrl([message, filename, lineno]);
-                createImage(url);
+                var error = {
+                    message: message,
+                    filename: filename,
+                    lineno: lineno,
+                };
+                if (isDev) {
+                    if (isUncaught !== true) {
+                        cons.error(error);
+                    }
+                    return false;
+                } else {
+                    var url = makeUrl(error, (filename === 'modules/adverts/documentwriteslot.js' || message === 'Script error.'));
+                    createImage(url);
+                    return (prefs.isOn('showErrors')) ? false : true;
+                }
             },
             init = function() {
-                win.onerror = log;
+                win.onerror = function(message, filename, lineno) {
+                    return log(message, filename, lineno, true);
+                };
             };
-        
+
         return {
             log: log,
             init: init
         };
-        
+
     };
 
     return Errors;
 });
-

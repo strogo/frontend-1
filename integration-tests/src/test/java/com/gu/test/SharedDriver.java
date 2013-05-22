@@ -1,27 +1,32 @@
 package com.gu.test;
 
+import cucumber.api.Scenario;
+import cucumber.api.java.After;
+import cucumber.api.java.Before;
+import org.openqa.selenium.*;
+import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.support.events.EventFiringWebDriver;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.List;
 import java.util.Properties;
+import java.util.UUID;
 
-import junit.framework.Assert;
-
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.events.EventFiringWebDriver;
-import org.openqa.selenium.support.ui.ExpectedConditions;
-import org.openqa.selenium.support.ui.WebDriverWait;
-
-import cucumber.annotation.Before;
+import static org.junit.Assert.assertEquals;
 
 public class SharedDriver extends EventFiringWebDriver {
 	
 	static final int WAIT_TIME = 5;
 	
 	protected static String HOST;
+
+	protected static String USERPREFS;
 
 	private static WebDriver REAL_DRIVER;
 
@@ -38,6 +43,8 @@ public class SharedDriver extends EventFiringWebDriver {
 		HOST = (System.getProperty("host") != null && !System.getProperty("host").isEmpty())
 			? System.getProperty("host") : "http://localhost:9000";
 		
+		USERPREFS = "#gu.prefs.switchOff=swipe-nav";
+
 		// create driver
 		REAL_DRIVER = DriverFactory.createDriver(System.getProperty("driver", "firefox"), System.getProperty("http_proxy", ""));
 
@@ -56,15 +63,33 @@ public class SharedDriver extends EventFiringWebDriver {
 		clearLocalStorage();
 	}
 
+    @After
+    public void embedScreenshot(Scenario scenario) throws IOException {
+        if (scenario.isFailed()) {
+            try {
+                byte[] screenshot = getScreenshotAs(OutputType.BYTES);
+                new File("target/surefire-reports/").mkdirs(); // ensure directory is there
+                FileOutputStream out = new FileOutputStream("target/surefire-reports/failure-screenhot-" + UUID.randomUUID().toString() + ".png");
+                //write screenshot to file
+                out.write(screenshot);
+                out.close();
+            } catch (WebDriverException somePlatformsDontSupportScreenshots) {
+                System.err.println(somePlatformsDontSupportScreenshots.getMessage());
+            }
+        }
+    }
+
 	public void clearLocalStorage() {
 		// only execute on a page
-		if (!getCurrentUrl().equals("about:blank")) {
-			executeScript("window.localStorage.clear();");						
+        if (!getCurrentUrl().equals("about:blank") && REAL_DRIVER instanceof FirefoxDriver) {
+            //this doesn't work in Chrome (throws an exception see http://code.google.com/p/chromedriver/issues/detail?id=153)
+		executeScript("window.localStorage.clear();");
+
 		}
 	}
 
 	public void open(String url) {
-		get(HOST + url);
+		get(HOST + url + USERPREFS);
 	}
 
 	public boolean isTextPresentByElement(By elementname, String textToSearch) {
@@ -122,7 +147,7 @@ public class SharedDriver extends EventFiringWebDriver {
 	 * Wait for an element to have some text
 	 * 
 	 * @param locator 
-	 * @param The text
+	 * @param text
 	 */
 	public boolean waitForText(By locator, String text) {
 		return new WebDriverWait(this, WAIT_TIME)
@@ -147,7 +172,7 @@ public class SharedDriver extends EventFiringWebDriver {
 
 		for (WebElement footerLink : footerLinks) {
 			// checks if the page is 200 - errors if it finds another type of page eg 404, 502
-			Assert.assertEquals(200, checkURLReturns(footerLink.getAttribute("href")));
+			assertEquals(200, checkURLReturns(footerLink.getAttribute("href")));
 		}
 	}
 
@@ -173,4 +198,18 @@ public class SharedDriver extends EventFiringWebDriver {
 
 		return connection.getResponseCode();
 	}
+
+	/**
+	 * Fire a Javascript click on an element
+	 * 
+	 * @param element
+	 */
+	public void click(WebElement element) {
+		 element.click();
+	}
+
+    public void jsClick(WebElement element) {
+        ((JavascriptExecutor)this).executeScript("arguments[0].click();", element);
+    }
+
 }
