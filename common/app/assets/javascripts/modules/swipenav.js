@@ -115,13 +115,10 @@ define([
 
             // Is cached ?
             if (frag) {
-                window.console.log('FROM STORAGE:' + url);
                 populate(el, frag);
                 common.mediator.emit('module:swipenav:pane:loaded', el);
                 callback();
-            }
-            else {
-                window.console.log('NOT STORED:' + url);
+            } else {
                 el.pending = true;
                 ajax({
                     url: url,
@@ -173,6 +170,7 @@ define([
 
         url    = context.dataset.url;
         config = context.config || {};
+        config.page = config.page || {};
 
         setSequencePos(url);
 
@@ -193,7 +191,7 @@ define([
         config.swipe = {
             initiatedBy: initiatedBy,
             referrer: referrer,
-            referrerPageName: referrerPageName,
+            referrerPageName: referrerPageName
         };
 
         common.mediator.emit('page:ready', pageConfig(config), context);
@@ -201,7 +199,7 @@ define([
         referrer = window.location.href;
         referrerPageName = config.page.analyticsName;
 
-        if(clickSelector && initiatedBy === 'click') {
+        if (clickSelector && initiatedBy === 'click' && !window.guardian.isOffline) {
             loadSequence(function(sequence){
                 setSequence(sequence);
                 loadSidePanes();
@@ -209,7 +207,6 @@ define([
         } else {
             loadSidePanes();
         }
-
     }
 
     function setSequencePos(url) {
@@ -269,12 +266,9 @@ define([
                     sequenceCache[s.url] = s;
                     sequence.push(s);
                     sequenceLen += 1;
-                    //window.console.log(i + " " + s.url);
                 }
             }
             setSequencePos(window.location.pathname);
-
-            offlineSync();
         }
     }
 
@@ -287,7 +281,6 @@ define([
         for (url in sequenceCache) {
             key = [storePrefix + url];
             if (storedKeys[key]) {
-                window.console.log('GOT:' + url);
                 delete storedKeys[key];
             } else {
                 offlinePreload(url);
@@ -305,7 +298,7 @@ define([
     }
 
     function offlineSet(url, frag) {
-        return storage.get(storePrefix + url, frag);
+        return storage.set(storePrefix + url, frag);
     }
 
     function offlinePreload(url) {
@@ -323,7 +316,6 @@ define([
                 config = frag.config;
 
                 if(html && config) {
-                    window.console.log('FETCHED:' + url);
                     storage.set(storePrefix + url, frag);
                     extractImages(html);
                 }
@@ -340,7 +332,6 @@ define([
     }
 
     function preloadImages(src) {
-        window.console.log('PRELOADING IMAGE: ' + src);
         var img = new Image();
         img.src = src;
     }
@@ -556,17 +547,25 @@ define([
         // Bind clicks to cause swipe-in transitions
         if (clickSelector){
             bean.on(document, 'click', clickSelector, function (e) {
-                var url;
-
-                if (!validateClick(e)) { return true; }
+                var url = urlAbsPath($(this).attr('href'));
 
                 e.preventDefault();
 
-                url = urlAbsPath($(this).attr('href'));
+                if (window.guardian.isOffline && !offlineGet(url)) {
+                    if(window.confirm('Go back online?')) {
+                        window.guardian.isOffline = false;
+                    } else {
+                        return;
+                    }
+                }
+
+                if (!validateClick(e)) { return true; }
 
                 if (url === urlAbsPath(window.location.href)) {
-                    // Force a complete reload if the link is for the current page
-                    window.location.reload(true);
+                    if (!window.guardian.isOffline) {
+                        // Force a complete reload if the link is for the current page
+                        window.location.reload(true);
+                    }
                 }
                 else {
                     initiatedBy = 'click';
@@ -615,6 +614,11 @@ define([
         setInterval(function(){
             updateHeight();
         }, 2003); // Prime number, for good luck
+
+        bean.on(document, 'click', '.downloader', function () {
+            offlineSync();
+            window.guardian.isOffline = true;
+        });
     }
 
     var initialise = function(config) {

@@ -81,6 +81,10 @@ define('bootstraps/app', [
 
                 bootstrapCommon.init(config, context);
 
+                if(window.guardian.isOffline) {
+                    return;
+                }
+
                 //Fronts
                 r.get('/', function(req) {        Front.init(config, context); });
                 r.get('/sport', function(req) {   Front.init(config, context); });

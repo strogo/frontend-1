@@ -4,6 +4,9 @@
  <nav role="navigation" aria-label="Guardian sections"
     @if(isFooter){ data-link-name="global navigation: footer : sections"} else {
         data-link-name="global navigation: header : sections"}>
+
+    <button class="downloader">Download for offline reading</button>
+
     <ul class="nav nav--columns nav--top-border-off @if(isFooter){nav--footer} cf">
 
         @Edition(request).navigation(page).map{ section =>

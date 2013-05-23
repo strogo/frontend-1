@@ -78,7 +78,13 @@ define(['common', 'modules/detect', 'bean'], function (common, detect, bean) {
 
         // delegate, emit the derived tag
         bean.add(document.body, 'click', function (event) {
-            var clickSpec = getClickSpec({el: event.target});
+            var clickSpec;
+
+            if(window.guardian.isOffline) {
+                return;
+            }
+
+            clickSpec = getClickSpec({el: event.target});
             if (clickSpec) {
                 common.mediator.emit('module:clickstream:click', clickSpec);
             }

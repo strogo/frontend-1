@@ -62,16 +62,21 @@ define([
     swipeNav,
     VideoAdvert
 ) {
+    var guardian = window.guardian,
 
-    var modules = {
+        modules = {
 
         upgradeImages: function () {
             var images = new Images();
             common.mediator.on('page:common:ready', function(config, context) {
-                images.upgrade(context);
+                if(!guardian.isOffline) {
+                    images.upgrade(context);
+                }
             });
             common.mediator.on('fragment:ready:images', function(context) {
-                images.upgrade(context);
+                if(!guardian.isOffline) {
+                    images.upgrade(context);
+                }
             });
         },
 
@@ -93,19 +98,25 @@ define([
         transcludeTopStories: function () {
             var topStories = new TopStories();
             common.mediator.on('page:common:ready', function(config, context) {
-                topStories.load(config, context);
+                if(!guardian.isOffline) {
+                    topStories.load(config, context);
+                }
             });
         },
 
         transcludeRelated: function () {
             common.mediator.on("page:common:ready", function(config, context){
-                related(config, context);
+                if(!guardian.isOffline) {
+                    related(config, context);
+                }
             });
         },
 
         transcludePopular: function () {
             common.mediator.on('page:common:ready', function(config, context) {
-                popular(config, context);
+                if(!guardian.isOffline) {
+                    popular(config, context);
+                }
             });
         },
 
@@ -132,60 +143,62 @@ define([
 
             common.mediator.on('page:common:deferred:loaded', function(config, context) {
 
-                // AB must execute before Omniture
-                AB.init(config, context);
+                if(!guardian.isOffline) {
 
-                omniture.go(config, function(){
-                    // callback:
+                    // AB must execute before Omniture
+                    AB.init(config, context);
 
-                    Array.prototype.forEach.call(context.getElementsByTagName("video"), function(video){
-                        if (!bonzo(video).hasClass('tracking-applied')) {
-                            bonzo(video).addClass('tracking-applied');
-                            var v = new OmnitureMedia({
-                                el: video,
-                                config: config
-                            }).init();
-                        }
-                    });
-                });
+                    omniture.go(config, function(){
+                        // callback:
 
-                require(config.page.ophanUrl, function (Ophan) {
-
-                    if (!Ophan.isInitialised) {
-                        Ophan.isInitialised = true;
-                        Ophan.initLog();
-                    }
-
-                    Ophan.additionalViewData(function() {
-
-                        var viewData = {};
-
-                        var audsci = storage.get('gu.ads.audsci');
-                        if (audsci) {
-                            viewData.audsci_json = JSON.stringify(audsci);
-                        }
-
-                        if(AB.inTest(config.switches)) {
-                            var test = AB.getTest();
-                            viewData.experiments_json = JSON.stringify([{
-                                id: test.id,
-                                variant: test.variant
-                            }]);
-                        }
-
-                        return viewData;
+                        Array.prototype.forEach.call(context.getElementsByTagName("video"), function(video){
+                            if (!bonzo(video).hasClass('tracking-applied')) {
+                                bonzo(video).addClass('tracking-applied');
+                                var v = new OmnitureMedia({
+                                    el: video,
+                                    config: config
+                                }).init();
+                            }
+                        });
                     });
 
-                    Ophan.sendLog(config.swipe ? config.swipe.referrer : undefined);
-                });
+                    require(config.page.ophanUrl, function (Ophan) {
 
+                        if (!Ophan.isInitialised) {
+                            Ophan.isInitialised = true;
+                            Ophan.initLog();
+                        }
+
+                        Ophan.additionalViewData(function() {
+
+                            var viewData = {};
+
+                            var audsci = storage.get('gu.ads.audsci');
+                            if (audsci) {
+                                viewData.audsci_json = JSON.stringify(audsci);
+                            }
+
+                            if(AB.inTest(config.switches)) {
+                                var test = AB.getTest();
+                                viewData.experiments_json = JSON.stringify([{
+                                    id: test.id,
+                                    variant: test.variant
+                                }]);
+                            }
+
+                            return viewData;
+                        });
+
+                        Ophan.sendLog(config.swipe ? config.swipe.referrer : undefined);
+                    });
+                }
             });
         },
 
         loadAdverts: function () {
             if (!userPrefs.isOff('adverts')){
                 common.mediator.on('page:common:deferred:loaded', function(config, context) {
-                    if (config.switches && config.switches.adverts) {
+                    if(!guardian.isOffline && config.switches && config.switches.adverts) {
                         Adverts.init(config, context);
                     }
                 });
@@ -197,7 +210,7 @@ define([
 
         loadVideoAdverts: function(config) {
             common.mediator.on('page:video:ready', function(config, context) {
-                if(config.switches.videoAdverts && !config.page.blockAds) {
+                if(!guardian.isOffline && config.switches.videoAdverts && !config.page.blockAds) {
                     Array.prototype.forEach.call(context.querySelectorAll('video'), function(el) {
                         var support = detect.getVideoFormatSupport();
                         var a = new VideoAdvert({
