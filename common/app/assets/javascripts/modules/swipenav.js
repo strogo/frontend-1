@@ -305,14 +305,16 @@ define([
             type: 'jsonp',
             jsonpCallbackName: 'swipePreload',
             success: function (frag) {
-                var html;
+                var html,
+                    config;
 
                 frag = frag || {},
                 html = frag.html;
+                config = frag.config;
 
-                if(html) {
+                if(html && config) {
                     window.console.log('SAVING:' + p);
-                    storage.set(prefix + p, html);
+                    storage.set(prefix + p, frag);
                     //sequenceCache[p].html = html;
                     //sequenceCache[p].config = frag.config || {};
                 }
