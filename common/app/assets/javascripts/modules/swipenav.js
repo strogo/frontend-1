@@ -1,5 +1,6 @@
 define([
     'common',
+    'modules/storage',
     'modules/userPrefs',
     'modules/pageconfig',
     'swipeview',
@@ -9,6 +10,7 @@ define([
     'modules/url'
 ], function(
     common,
+    storage,
     userPrefs,
     pageConfig,
     SwipeView,
@@ -274,7 +276,50 @@ define([
                 }
             }
             setSequencePos(window.location.pathname);
+
+            syncStorage();
         }
+    }
+
+    function syncStorage() {
+        var prefix = 'gu.swipe.cache.',
+            storedUrls = storage.keysByPrefix(prefix),
+            p;
+
+        window.console.log(storedUrls);
+
+        for (p in sequenceCache) {
+            if (storedUrls[prefix + p]) {
+                window.console.log('GOT:' + p);
+            } else {
+                addToStore(p);
+            }
+        }
+    }
+
+    function addToStore(p) {
+        var prefix = 'gu.swipe.cache.';
+
+        window.console.log('FETCHING:' + p);
+        ajax({
+            url: p,
+            method: 'get',
+            type: 'jsonp',
+            jsonpCallbackName: 'swipePreload',
+            success: function (frag) {
+                var html;
+
+                frag = frag || {},
+                html = frag.html;
+
+                if(html) {
+                    window.console.log('SAVING:' + p);
+                    storage.set(prefix + p, html);
+                    //sequenceCache[p].html = html;
+                    //sequenceCache[p].config = frag.config || {};
+                }
+            }
+        });
     }
 
     function gotoUrl(url, dir) {
