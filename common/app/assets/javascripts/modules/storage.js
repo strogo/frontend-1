@@ -120,11 +120,11 @@ define(['common'], function (common) {
         },
             
         keysByPrefix: function(prefix) {
-            var keys = [];
+            var keys = {};
             for (var i = storage.length() - 1; i > -1; --i) {
                 var name = storage.getKey(i);
                 if (name.indexOf(prefix) === 0) {
-                    keys.push(name);
+                    keys[name] = true;
                 }
             }
             return keys;

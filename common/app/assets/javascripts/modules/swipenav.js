@@ -40,6 +40,7 @@ define([
         sequence = [],
         sequenceCache,
         sequenceLen = 0,
+        storePrefix = 'gu.swipe.cache.',
         swipeContainer = '#preloads',
         swipeContainerEl = document.querySelector(swipeContainer),
         throttle,
@@ -110,15 +111,17 @@ define([
             el.bodyPart.innerHTML = pendingHTML;
 
             // Ask the cache
-            frag = sequenceCache[url];
+            frag = offlineGet(url);
 
             // Is cached ?
-            if (frag && frag.html) {
-                populate(el, frag.html);
+            if (frag) {
+                window.console.log('FROM STORAGE:' + url);
+                populate(el, frag);
                 common.mediator.emit('module:swipenav:pane:loaded', el);
                 callback();
             }
             else {
+                window.console.log('NOT STORED:' + url);
                 el.pending = true;
                 ajax({
                     url: url,
@@ -126,18 +129,11 @@ define([
                     type: 'jsonp',
                     jsonpCallbackName: 'swipePreload',
                     success: function (frag) {
-                        var html;
-
                         delete el.pending;
                         frag   = frag || {};
-                        html   = frag.html || '<div class="preload-msg">Oops. This page might be broken?</div>';
-
-                        sequenceCache[url] = sequenceCache[url] || {};
-                        sequenceCache[url].html = html;
-                        sequenceCache[url].config = frag.config || {};
-
+                        offlineSet(url, frag);
                         if (el.dataset.url === url) {
-                            populate(el, html);
+                            populate(el, frag);
                             common.mediator.emit('module:swipenav:pane:loaded', el);
                             callback();
                         }
@@ -147,8 +143,9 @@ define([
         }
     }
 
-    function populate(el, html) {
-        el.bodyPart.innerHTML = html;
+    function populate(el, frag) {
+        el.bodyPart.innerHTML = frag.html || '<div class="preload-msg">Oops. This page might be broken?</div>';
+        el.config = frag.config || {};
     }
 
     // Make the swipeContainer height equal to the visiblePane height. (We view the latter through the former.)
@@ -174,10 +171,10 @@ define([
             return;
         }
 
-        url = context.dataset.url;
-        setSequencePos(url);
+        url    = context.dataset.url;
+        config = context.config || {};
 
-        config = (sequenceCache[url] || {}).config || {};
+        setSequencePos(url);
 
         if (config.page && config.page.webTitle) {
             div = document.createElement('div');
@@ -277,30 +274,43 @@ define([
             }
             setSequencePos(window.location.pathname);
 
-            syncStorage();
+            offlineSync();
         }
     }
 
-    function syncStorage() {
-        var prefix = 'gu.swipe.cache.',
-            storedUrls = storage.keysByPrefix(prefix),
-            p;
+    function offlineSync() {
+        var storedKeys = storage.keysByPrefix(storePrefix),
+            key,
+            url;
 
-        for (p in sequenceCache) {
-            if (storedUrls.indexOf(prefix + p) > -1) {
-                window.console.log('GOT:' + p);
+        // Load all un-stored content
+        for (url in sequenceCache) {
+            key = [storePrefix + url];
+            if (storedKeys[key]) {
+                window.console.log('GOT:' + url);
+                delete storedKeys[key];
             } else {
-                addToStore(p);
+                offlinePreload(url);
             }
         }
+
+        // Delete all stored content that's not needed
+        for (key in storedKeys) {
+            storage.remove(key);
+        }
     }
 
-    function addToStore(p) {
-        var prefix = 'gu.swipe.cache.';
+    function offlineGet(url) {
+        return storage.get(storePrefix + url);
+    }
 
-        window.console.log('FETCHING:' + p);
+    function offlineSet(url, frag) {
+        return storage.get(storePrefix + url, frag);
+    }
+
+    function offlinePreload(url) {
         ajax({
-            url: p,
+            url: url,
             method: 'get',
             type: 'jsonp',
             jsonpCallbackName: 'swipePreload',
@@ -313,10 +323,8 @@ define([
                 config = frag.config;
 
                 if(html && config) {
-                    window.console.log('SAVING:' + p);
-                    storage.set(prefix + p, frag);
-                    //sequenceCache[p].html = html;
-                    //sequenceCache[p].config = frag.config || {};
+                    window.console.log('FETCHED:' + url);
+                    storage.set(storePrefix + url, frag);
                 }
             }
         });
