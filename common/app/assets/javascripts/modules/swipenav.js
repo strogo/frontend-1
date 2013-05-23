@@ -325,9 +325,24 @@ define([
                 if(html && config) {
                     window.console.log('FETCHED:' + url);
                     storage.set(storePrefix + url, frag);
+                    extractImages(html);
                 }
             }
         });
+    }
+
+    function extractImages(html) {
+        bonzo.create(html).forEach(function(context) {
+            Array.prototype.forEach.call(context.querySelectorAll('img'), function(img) {
+                preloadImages(img.src);
+            });
+        });
+    }
+
+    function preloadImages(src) {
+        window.console.log('PRELOADING IMAGE: ' + src);
+        var img = new Image();
+        img.src = src;
     }
 
     function gotoUrl(url, dir) {
