@@ -286,10 +286,8 @@ define([
             storedUrls = storage.keysByPrefix(prefix),
             p;
 
-        window.console.log(storedUrls);
-
         for (p in sequenceCache) {
-            if (storedUrls[prefix + p]) {
+            if (storedUrls.indexOf(prefix + p) > -1) {
                 window.console.log('GOT:' + p);
             } else {
                 addToStore(p);
