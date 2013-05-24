@@ -275,7 +275,9 @@ define([
     function offlineSync() {
         var storedKeys = storage.keysByPrefix(storePrefix),
             key,
-            url;
+            url,
+            total = 0,
+            count = 0;
 
         // Load all un-stored content
         for (url in sequenceCache) {
@@ -284,8 +286,23 @@ define([
                 delete storedKeys[key];
             } else {
                 offlinePreload(url);
+                total += 1;
             }
         }
+
+        function showOfflineCount() {
+            if(total) {
+                count += 1;
+                visiblePane.querySelector('.downloader').innerHTML = 'Loading ' + Math.floor(count / total * 100) + '%';
+                if(count === total) {
+                    common.mediator.emit('module:swipenav:offline:load:complete');
+                }
+            } else {
+                visiblePane.querySelector('.downloader').innerHTML = 'Loaded';
+            }
+        }
+
+        common.mediator.on('module:swipenav:offline:load', showOfflineCount);
 
         // Delete all stored content that's not needed
         for (key in storedKeys) {
@@ -318,6 +335,7 @@ define([
                 if(html && config) {
                     storage.set(storePrefix + url, frag);
                     extractImages(html);
+                    common.mediator.emit('module:swipenav:offline:load');
                 }
             }
         });

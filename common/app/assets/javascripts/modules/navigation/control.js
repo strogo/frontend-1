@@ -26,12 +26,16 @@ define(['common', 'bean', 'bonzo'], function (common, bean, bonzo) {
                 });
             }
 
-            for (var c in contexts) {
-                if (c !== id) {
-                    Array.prototype.forEach.call(contexts[c], self.close);
-                }
-            }
+            closeAll();
         };
+
+        function closeAll() {
+            for (var c in contexts) {
+                Array.prototype.forEach.call(contexts[c], self.close);
+            }
+        }
+
+        common.mediator.on('module:swipenav:offline:load:complete', closeAll);
     };
 
     Control.prototype.toggle = function(control, controls) {
