@@ -29,7 +29,8 @@ define([
     'modules/debug',
     'modules/experiments/ab',
     'modules/swipenav',
-    "modules/adverts/video"
+    "modules/adverts/video",
+    "modules/leap"
 ], function (
     common,
     ajax,
@@ -60,7 +61,8 @@ define([
     Debug,
     AB,
     swipeNav,
-    VideoAdvert
+    VideoAdvert,
+    LeapSwipe
 ) {
 
     var modules = {
@@ -230,7 +232,29 @@ define([
 
         initSwipe: function(config) {
             if ((config.switches.swipeNav && detect.canSwipe() && !userPrefs.isOff('swipe-nav')) || userPrefs.isOn('swipe-nav')) {
-                swipeNav(config);
+
+                var swipe = swipeNav(config);
+
+                console.log(swipe);
+
+                common.mediator.on('leap:left', function() {
+                    console.log("swiped left");
+                    swipe.gotoNext('leap_left');
+                });
+
+                common.mediator.on('leap:right', function() {
+                    console.log("swiped right");
+                    swipe.gotoPrev('leap_right');
+                });
+
+                require(["js!https://raw.github.com/theefer/gu-2030/master/app/scripts/lib/leap.min.js",
+                        "js!https://raw.github.com/documentcloud/underscore/master/underscore-min.js"], function () {
+
+                    if(window.Leap && _) {
+                        var leap = new LeapSwipe().init();
+                    }
+
+                });
             }
         }
     };
