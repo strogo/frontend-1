@@ -212,9 +212,14 @@
 
 .downloader {
   margin: 8px 0 8px 16px;
-  font-size: 15px;
-  padding: 5px 10px 4px 10px;
+  font-size: 16px;
+  padding: 8px 10px 8px 10px;
   border: 0;
   background-color: #214583;
   color: #ffffff;
+  text-align: left;
+  min-width: 15%;
+  max-width: 90%;
+  overflow: hidden;
+  @include transition(width 1000ms);
 }

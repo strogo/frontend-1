@@ -30,6 +30,8 @@ define([
         initiatedBy = 'initial',
         initialUrl,
         noHistoryPush = false,
+        offlineCount = 0,
+        offlineTotal = 0,
         panes,
         paneNow = 1,
         paneThen = 1,
@@ -275,9 +277,10 @@ define([
     function offlineSync() {
         var storedKeys = storage.keysByPrefix(storePrefix),
             key,
-            url,
-            total = 0,
-            count = 0;
+            url;
+
+        offlineCount = 0;
+        offlineTotal = 0;
 
         // Load all un-stored content
         for (url in sequenceCache) {
@@ -286,27 +289,35 @@ define([
                 delete storedKeys[key];
             } else {
                 offlinePreload(url);
-                total += 1;
+                offlineTotal += 1;
             }
         }
-
-        function showOfflineCount() {
-            if(total) {
-                count += 1;
-                visiblePane.querySelector('.downloader').innerHTML = 'Loading ' + Math.floor(count / total * 100) + '%';
-                if(count === total) {
-                    common.mediator.emit('module:swipenav:offline:load:complete');
-                }
-            } else {
-                visiblePane.querySelector('.downloader').innerHTML = 'Loaded';
-            }
-        }
-
-        common.mediator.on('module:swipenav:offline:load', showOfflineCount);
 
         // Delete all stored content that's not needed
         for (key in storedKeys) {
             storage.remove(key);
+        }
+
+        if(offlineCount === offlineTotal) {
+            common.mediator.emit('module:swipenav:offline:load:complete');
+        } else {
+            showOfflineCount();
+        }
+    }
+
+    function showOfflineCount() {
+        var el = visiblePane.querySelector('.downloader'),
+            width;
+        
+        if(offlineTotal) {
+            offlineCount += 1;
+            width = Math.floor(offlineCount / offlineTotal * 100) + '%';
+            el.innerHTML = width;
+            el.style.width = width;
+        }
+
+        if(offlineCount === offlineTotal) {
+            common.mediator.emit('module:swipenav:offline:load:complete');
         }
     }
 
@@ -637,6 +648,8 @@ define([
             offlineSync();
             window.guardian.isOffline = true;
         });
+
+        common.mediator.on('module:swipenav:offline:load', showOfflineCount);
     }
 
     var initialise = function(config) {
