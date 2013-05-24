@@ -311,7 +311,7 @@ define([
                 var html,
                     config;
 
-                frag = frag || {},
+                frag = frag || {};
                 html = frag.html;
                 config = frag.config;
 
