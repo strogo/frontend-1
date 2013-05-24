@@ -324,7 +324,7 @@ define([
         
         if(offlineTotal) {
             offlineCount += 1;
-            width = Math.floor(offlineCount / offlineTotal * 100) + '%';
+            width = Math.min(Math.floor(offlineCount / offlineTotal * 100), 100) + '%';
             el.innerHTML = width;
             el.style.width = width;
         }
