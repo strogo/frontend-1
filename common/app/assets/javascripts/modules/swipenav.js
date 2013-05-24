@@ -282,6 +282,19 @@ define([
         offlineCount = 0;
         offlineTotal = 0;
 
+        sequenceCache["/"] = true;
+        sequenceCache["/uk"] = true;
+        sequenceCache["/world"] = true;
+        sequenceCache["/commentisfree"] = true;
+        sequenceCache["/sport"] = true;
+        sequenceCache["/football"] = true;
+        sequenceCache["/lifeandstyle"] = true;
+        sequenceCache["/culture"] = true;
+        sequenceCache["/business"] = true;
+        sequenceCache["/travel"] = true;
+        sequenceCache["/technology"] = true;
+        sequenceCache["/environment"] = true;
+
         // Load all un-stored content
         for (url in sequenceCache) {
             key = [storePrefix + url];
@@ -581,7 +594,7 @@ define([
                 e.preventDefault();
 
                 if (window.guardian.isOffline && !offlineGet(url)) {
-                    if(window.confirm('Go back online?')) {
+                    if(window.confirm('Go back online to read this page?')) {
                         window.guardian.isOffline = false;
                     } else {
                         return;
