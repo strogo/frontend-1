@@ -217,8 +217,8 @@
   border: 0;
   background-color: #214583;
   color: #ffffff;
-  text-align: left;
-  min-width: 15%;
+  text-align: right;
+  min-width: 50px;
   max-width: 90%;
   overflow: hidden;
   @include transition(width 1000ms);
