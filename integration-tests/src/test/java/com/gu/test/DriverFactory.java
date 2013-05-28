@@ -7,7 +7,6 @@ import org.openqa.selenium.firefox.FirefoxDriver;
 import org.openqa.selenium.firefox.FirefoxProfile;
 import org.openqa.selenium.htmlunit.HtmlUnitDriver;
 import org.openqa.selenium.phantomjs.PhantomJSDriver;
-import org.openqa.selenium.phantomjs.PhantomJSDriverService;
 import org.openqa.selenium.remote.CapabilityType;
 import org.openqa.selenium.remote.DesiredCapabilities;
 
@@ -30,13 +29,12 @@ public class DriverFactory {
 			driver = new HtmlUnitDriver(capabilities);
 
 		} else if (type.equals("phantomJS")) {
-	      
+	    //phantomjs is required to be in your PATH
+
 			// prepare capabilities
 			DesiredCapabilities caps = new DesiredCapabilities();
 			caps.setCapability("takesScreenshot", true);    //< yeah, GhostDriver haz screenshotz!
-			caps.setCapability(
-	            PhantomJSDriverService.PHANTOMJS_EXECUTABLE_PATH_PROPERTY, "/usr/local/bin/phantomjs"
-			);
+
 	
 			// Launch driver (will take care and ownership of the phantomjs process)
 			driver = new PhantomJSDriver(caps);
