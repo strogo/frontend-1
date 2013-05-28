@@ -209,7 +209,13 @@ public class SharedDriver extends EventFiringWebDriver {
 	}
 
     public void jsClick(WebElement element) {
-        ((JavascriptExecutor)this).executeScript("arguments[0].click();", element);
-    }
-
+           if(System.getProperty("driver").equals("phantomJS")){
+               //phantomJS does not support this Javascript
+            element.click();
+        }
+     else   {
+            ((JavascriptExecutor)this).executeScript("arguments[0].click();", element);
+      }    }
 }
+
+
