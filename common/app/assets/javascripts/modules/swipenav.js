@@ -3,7 +3,7 @@ define([
     'modules/storage',
     'modules/userPrefs',
     'modules/pageconfig',
-    'swipeview',
+    'swipe',
     'bean',
     'bonzo',
     'ajax',
@@ -13,7 +13,7 @@ define([
     storage,
     userPrefs,
     pageConfig,
-    SwipeView,
+    Swipe,
     bean,
     bonzo,
     ajax,
@@ -74,19 +74,24 @@ define([
         return mod(x, 3);
     }
 
+    function getPane(index) {
+        return swipeContainerEl.querySelector('#preloads-inner > #preload-' + index);
+    }
+
     function prepareDOM() {
-        var pages = document.querySelector('#preloads'),
-            page0 = pages.querySelector('#preload-0 .parts'),
-            page1 = pages.querySelector('#preload-1 .parts'),
-            page2 = pages.querySelector('#preload-2 .parts'),
+        var page0 = swipeContainerEl.querySelector('#preload-0 .parts'),
+            page1 = swipeContainerEl.querySelector('#preload-1 .parts'),
+            page2 = swipeContainerEl.querySelector('#preload-2 .parts'),
             head  = page1.querySelector('.parts__head'),
             foot  = page1.querySelector('.parts__foot'),
             initialBodyHtml = '<div class="parts__body">' + pendingHTML + '</div>';
 
+        /*
         var css = document.createElement("style");
         css.type = "text/css";
         css.innerHTML = "#preload-0{left: -100%} #preload-1{left:0%} #preload-2{left: 100%}";
         document.body.appendChild(css);
+        */
 
         bonzo(page0).append(head.cloneNode(true));
         bonzo(page0).append(bonzo.create(initialBodyHtml));
@@ -449,7 +454,7 @@ define([
 
         url = urlAbsPath(url);
 
-        el = panes.masterPages[mod3(paneNow + dir)];
+        el = getPane(mod3(paneNow + dir));
         
         // Only load if not already loaded into this pane
         if (el.dataset.url !== url) {
@@ -496,9 +501,9 @@ define([
 
         if( hiddenPaneMargin < visiblePaneMargin ) {
             // We've scrolled up over the offset; reset all margins and jump to topmost scroll
-            $(panes.masterPages[mod3(paneNow)]).css(  'marginTop', 0);
-            $(panes.masterPages[mod3(paneNow+1)]).css('marginTop', 0);
-            $(panes.masterPages[mod3(paneNow-1)]).css('marginTop', 0);
+            $(getPane(mod3(paneNow))).css(  'marginTop', 0);
+            $(getPane(mod3(paneNow+1))).css('marginTop', 0);
+            $(getPane(mod3(paneNow-1))).css('marginTop', 0);
             // And reset the scroll
             body.scrollTop( contentAreaTop );
             visiblePaneMargin = 0;
@@ -506,8 +511,8 @@ define([
         }
         else {
             // We've scrolled down; push L/R sidepanes down to level of current pane
-            $(panes.masterPages[mod3(paneNow+1)]).css('marginTop', hiddenPaneMargin);
-            $(panes.masterPages[mod3(paneNow-1)]).css('marginTop', hiddenPaneMargin);
+            $(getPane(mod3(paneNow+1))).css('marginTop', hiddenPaneMargin);
+            $(getPane(mod3(paneNow-1))).css('marginTop', hiddenPaneMargin);
         }
     }, 250);
 
@@ -545,30 +550,35 @@ define([
     function start() {
 
         // SwipeView
-        panes = new SwipeView(swipeContainer, {});
+        panes = new Swipe(swipeContainerEl, {
+            
+            startSlide: 1,
+            
+            transitionEnd: function () {
+                initiatedBy = 'swipe';
+            },
+
+            callback: function (e, index, elem) {
+                paneNow = index;
+
+                if (paneThen !== paneNow) {
+                    // shuffle down the pane we've just left
+                    $(getPane(paneThen)).css('marginTop', hiddenPaneMargin);
+                    visiblePaneMargin = hiddenPaneMargin;
+
+                    paneThen = paneNow;
+                    visiblePane = elem;
+
+                    common.mediator.emit('module:swipenav:pane:loaded', visiblePane);
+                }
+            }
+
+        });
 
         updateHeight();
 
-        panes.onFlip(function () {
-            paneNow = mod3(panes.pageIndex+1);
-            if (paneThen !== paneNow) {
-                // shuffle down the pane we've just left
-                $(panes.masterPages[paneThen]).css('marginTop', hiddenPaneMargin);
-                visiblePaneMargin = hiddenPaneMargin;
-
-                paneThen = paneNow;
-                visiblePane = panes.masterPages[paneNow];
-
-                common.mediator.emit('module:swipenav:pane:loaded', visiblePane);
-            }
-        });
-
-        panes.onMoveOut(function () {
-            initiatedBy = 'swipe';
-        });
-
         // Identify and annotate the initially visible pane
-        visiblePane = panes.masterPages[1];
+        visiblePane = getPane(1);
         visiblePane.dataset.url = initialUrl;
 
         // Set a body class. Might be useful.

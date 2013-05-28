@@ -61,23 +61,20 @@
    Preloads (for swipe)
    ========================================================================== */
 
-#preloads-inner {
-    position: relative;
-    top: 0px;
-    height: 100%;
-    width: 100%; 
-    @include transition(0ms ease-out);
-    @include transform(translateZ(0px));
+#preloads {
+  overflow: hidden;
+  position: relative;
 }
 
-#preload-0,
-#preload-1,
-#preload-2 {
-    @include transform(translateZ(0px));
-    position: absolute;
-    top: 0px;
-    height: 100%;
-    width: 100%;
+#preloads-inner {
+  overflow: hidden;
+  position: relative;
+}
+
+#preloads-inner > div {
+  float:left;
+  width:100%;
+  position: relative;
 }
 
 .preload-msg {
@@ -85,7 +82,7 @@
     text-align: center;
 }
 
-.swipeview-active .is-updating {
+#preloads-inner > div .is-updating {
   display: block;
   margin: 10px auto;
 }
