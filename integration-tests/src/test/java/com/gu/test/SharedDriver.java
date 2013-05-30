@@ -5,6 +5,7 @@ import cucumber.api.java.After;
 import cucumber.api.java.Before;
 import org.openqa.selenium.*;
 import org.openqa.selenium.firefox.FirefoxDriver;
+import org.openqa.selenium.phantomjs.PhantomJSDriver;
 import org.openqa.selenium.support.events.EventFiringWebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
@@ -209,12 +210,12 @@ public class SharedDriver extends EventFiringWebDriver {
 	}
 
     public void jsClick(WebElement element) {
-           if(System.getProperty("driver").equals("phantomJS")){
+           if( !(REAL_DRIVER instanceof PhantomJSDriver) ){
                //phantomJS does not support this Javascript
-            element.click();
+            ((JavascriptExecutor)this).executeScript("arguments[0].click();", element);
         }
      else   {
-            ((JavascriptExecutor)this).executeScript("arguments[0].click();", element);
+           element.click();
       }    }
 }
 
