@@ -2,15 +2,13 @@ package common.editions
 
 import common._
 import org.joda.time.DateTimeZone
-import model.{QueryTrailblockDescription, ItemTrailblockDescription, MetaData}
+import model.{ItemTrailblockDescription, MetaData}
 import views.support.{Headline, Thumbnail, Featured}
 import scala.Some
 import common.NavItem
-import conf.ContentApi
-import contentapi.QueryDefaults
 
-object Uk extends Edition("UK", "UK edition", DateTimeZone.forID("Europe/London")) with Sections with Zones
-  with QueryDefaults {
+
+object Uk extends Edition("UK", "UK edition", DateTimeZone.forID("Europe/London")) with Sections with Zones {
 
   implicit val UK = Uk
   val zones = Seq(
@@ -82,18 +80,10 @@ object Uk extends Edition("UK", "UK edition", DateTimeZone.forID("Europe/London"
 
     "australia" -> Seq(
       ItemTrailblockDescription("", "News", numItemsVisible = 5, style = Some(Featured), showMore = true)(Au),
-      ItemTrailblockDescription("sport", "Sport", numItemsVisible = 5, style = Some(Featured), showMore = true)(Au),
-      ItemTrailblockDescription("culture", "Culture", numItemsVisible = 3, style = Some(Thumbnail), showMore = true)(Au),
-      QueryTrailblockDescription("commentisfree", "Comment is free", numItemsVisible = 3, style = Some(Featured), showMore = true,
-        customQuery=ContentApi.item.itemId("commentisfree")
-          .edition("au")
-          .showTags("all")
-          .showFields(trailFields)
-          .showInlineElements(inlineElements)
-          .showMedia("all")
-          .showReferences(references)
-          .showStoryPackage(true)
-          .tag(supportedTypes)),
+      ItemTrailblockDescription("sport", "Sport", numItemsVisible = 3, style = Some(Featured), showMore = true)(Au),
+      ItemTrailblockDescription("sport/australia-sport", "Australia sport", numItemsVisible = 3, style = Some(Featured), showMore = true)(Au),
+      Au.cultureCustomBlock,
+      Au.commentCustomBlock,
       ItemTrailblockDescription("technology", "Technology", numItemsVisible = 1, style = Some(Thumbnail))(Au)
     )
   )

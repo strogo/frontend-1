@@ -1,7 +1,6 @@
 package controllers
 
 import common._
-import conf.CommonSwitches.AustraliaFrontSwitch
 import front._
 import model._
 import conf._
@@ -89,16 +88,19 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
     }
 
     // get the trailblocks
-    val trailblocks: Seq[Trailblock] = front(path, edition)
-
-    if (frontPage == AustraliaNetworkFrontPage && AustraliaFrontSwitch.isSwitchedOff) {
-      NotFound
+    val trailblocks: Seq[Trailblock] = front(path, edition).filterNot{ trailblock =>
+      // filter out configured trailblocks if not on the network front
+      path match {
+        case "front" => false
+        case _ => trailblock.description.isConfigured
+      }
     }
-    else if (trailblocks.isEmpty) {
+
+    if (trailblocks.isEmpty) {
       InternalServerError
     } else {
-      val htmlResponse = views.html.front(frontPage, trailblocks)
-      val jsonResponse = views.html.fragments.frontBody(frontPage, trailblocks)
+      val htmlResponse = () => views.html.front(frontPage, trailblocks)
+      val jsonResponse = () => views.html.fragments.frontBody(frontPage, trailblocks)
       renderFormat(htmlResponse, jsonResponse, frontPage, Switches.all)
     }
   }
@@ -117,14 +119,11 @@ class FrontController extends Controller with Logging with JsonTrails with Execu
     // get the first trailblock
     val trailblock: Option[Trailblock] = front(path, edition).headOption
 
-    if (frontPage == AustraliaNetworkFrontPage && AustraliaFrontSwitch.isSwitchedOff) {
-      NotFound
-    }
-    else if (trailblock.isEmpty) {
+    if (trailblock.isEmpty) {
       InternalServerError
     } else {
       val trails: Seq[Trail] = trailblock.get.trails
-      val response = views.html.fragments.trailblocks.headline(trails, numItemsVisible = trails.size)
+      val response = () => views.html.fragments.trailblocks.headline(trails, numItemsVisible = trails.size)
       renderFormat(response, response, frontPage)
     }
   }

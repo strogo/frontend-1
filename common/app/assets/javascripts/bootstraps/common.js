@@ -28,7 +28,8 @@ define([
     'modules/analytics/omnitureMedia',
     'modules/debug',
     'modules/experiments/ab',
-    'modules/swipenav'
+    'modules/swipenav',
+    "modules/adverts/video"
 ], function (
     common,
     ajax,
@@ -58,7 +59,8 @@ define([
     OmnitureMedia,
     Debug,
     AB,
-    swipeNav
+    swipeNav,
+    VideoAdvert
 ) {
 
     var modules = {
@@ -128,11 +130,7 @@ define([
             var cs = new Clickstream({filter: ["a", "button"]}),
                 omniture = new Omniture();
 
-            common.mediator.on('page:common:deferred:loaded', function(config, context) {
-
-                // AB must execute before Omniture
-                AB.init(config, context);
-
+            common.mediator.on('page:common:deferred:loaded:omniture', function(config, context) {
                 omniture.go(config, function(){
                     // callback:
 
@@ -146,6 +144,14 @@ define([
                         }
                     });
                 });
+            });
+
+            common.mediator.on('page:common:deferred:loaded', function(config, context) {
+
+                // AB must execute before Omniture
+                AB.init(config, context);
+
+                common.mediator.emit('page:common:deferred:loaded:omniture', config, context);
 
                 require(config.page.ophanUrl, function (Ophan) {
 
@@ -178,6 +184,7 @@ define([
                 });
 
             });
+
         },
 
         loadAdverts: function () {
@@ -191,6 +198,24 @@ define([
                     Adverts.loadAds();
                 });
             }
+        },
+
+        loadVideoAdverts: function(config) {
+            common.mediator.on('page:video:ready', function(config, context) {
+                if(config.switches.videoAdverts && !config.page.blockAds) {
+                    Array.prototype.forEach.call(context.querySelectorAll('video'), function(el) {
+                        var support = detect.getVideoFormatSupport();
+                        var a = new VideoAdvert({
+                            el: el,
+                            support: support,
+                            config: config,
+                            context: context
+                        }).init(config.page);
+                    });
+                } else {
+                    common.mediator.emit("video:ads:finished", config, context);
+                }
+            });
         },
 
         cleanupCookies: function() {
@@ -241,6 +266,7 @@ define([
             modules.transcludePopular();
             modules.transcludeTopStories();
             modules.initialiseNavigation(config);
+            modules.loadVideoAdverts(config);
             modules.initSwipe(config);
         }
         common.mediator.emit("page:common:ready", config, context);
