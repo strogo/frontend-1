@@ -40,7 +40,7 @@ define([
         referrerPageName,
         sequencePos = -1,
         sequence = [],
-        sequenceCache,
+        sequenceURLs,
         sequenceLen = 0,
         storePrefix = 'gu.swipe.cache.',
         swipeContainer = '#preloads',
@@ -125,12 +125,12 @@ define([
                 ajax({
                     url: url,
                     method: 'get',
-                    type: 'jsonp',
-                    jsonpCallbackName: 'swipePreload',
+                    type: 'json',
+                    crossOrigin: true,
                     success: function (frag) {
                         delete el.pending;
                         frag   = frag || {};
-                        offlineSet(url, frag);
+                        cacheSet(url, frag);
                         if (el.dataset.url === url) {
                             populate(el, frag);
                             common.mediator.emit('module:swipenav:pane:loaded', el);
@@ -216,8 +216,12 @@ define([
     }
 
     function getSequencePos(url) {
-        url = sequenceCache[url];
-        return url ? url.pos : -1;
+        for (var i = 0; i < sequenceLen; i += 1) {
+            if (sequence[i] === url) {
+                return i;
+            }
+        }
+        return -1;
     }
 
     function getSequenceUrl(pos) {
@@ -229,6 +233,8 @@ define([
         ajax({
             url: '/front-trails' + (section ? section[0] : ''),
             type: 'jsonp',
+            jsonpCallbackName: 'loadSequence',
+            //crossOrigin: true,
             success: function (json) {
                 if (json.stories && json.stories.length >= 3) {
                     callback(json.stories);
@@ -258,14 +264,14 @@ define([
 
             sequence = [];
             sequenceLen = 0;
-            sequenceCache = {};
+            sequenceURLs = {};
 
             for (i = 0; i < len; i += 1) {
                 s = arr[i];
                 // dedupe, while also creating a lookup obj
-                if(!sequenceCache[s.url]) {
+                if(!sequenceURLs[s.url]) {
                     s.pos = sequenceLen;
-                    sequenceCache[s.url] = s;
+                    sequenceURLs[s.url] = s;
                     sequence.push(s);
                     sequenceLen += 1;
                 }
@@ -282,21 +288,21 @@ define([
         offlineCount = 0;
         offlineTotal = 0;
 
-        sequenceCache["/"] = true;
-        sequenceCache["/uk"] = true;
-        sequenceCache["/world"] = true;
-        sequenceCache["/commentisfree"] = true;
-        sequenceCache["/sport"] = true;
-        sequenceCache["/football"] = true;
-        sequenceCache["/lifeandstyle"] = true;
-        sequenceCache["/culture"] = true;
-        sequenceCache["/business"] = true;
-        sequenceCache["/travel"] = true;
-        sequenceCache["/technology"] = true;
-        sequenceCache["/environment"] = true;
+        sequenceURLs["/"] = true;
+        sequenceURLs["/uk"] = true;
+        sequenceURLs["/world"] = true;
+        sequenceURLs["/commentisfree"] = true;
+        sequenceURLs["/sport"] = true;
+        sequenceURLs["/football"] = true;
+        sequenceURLs["/lifeandstyle"] = true;
+        sequenceURLs["/culture"] = true;
+        sequenceURLs["/business"] = true;
+        sequenceURLs["/travel"] = true;
+        sequenceURLs["/technology"] = true;
+        sequenceURLs["/environment"] = true;
 
         // Load all un-stored content
-        for (url in sequenceCache) {
+        for (url in sequenceURLs) {
             key = [storePrefix + url];
             if (storedKeys[key]) {
                 delete storedKeys[key];
@@ -338,16 +344,17 @@ define([
         return storage.get(storePrefix + url);
     }
 
-    function offlineSet(url, frag) {
-        return storage.set(storePrefix + url, frag);
+    function cacheSet(url, frag) {
+        // Add 5 minute expiry (= 300000ms)
+        return storage.set(storePrefix + url, frag, {expires: 10000 + (new Date()).getTime()});
     }
 
     function offlinePreload(url) {
         ajax({
             url: url,
             method: 'get',
-            type: 'jsonp',
-            jsonpCallbackName: 'swipePreload',
+            type: 'json',
+            crossOrigin: true,
             success: function (frag) {
                 var html,
                     config;
@@ -357,7 +364,7 @@ define([
                 config = frag.config;
 
                 if(html && config) {
-                    storage.set(storePrefix + url, frag);
+                    cacheSet(url, frag);
                     extractImages(html);
                     common.mediator.emit('module:swipenav:offline:load');
                 }
@@ -655,7 +662,7 @@ define([
         // Set a periodic height adjustment for the content area. Necessary to account for diverse heights of side-panes as they slide in, and dynamic page elements.
         setInterval(function(){
             updateHeight();
-        }, 2003); // Prime number, for good luck
+        }, 1009); // Prime number, for good luck
 
         bean.on(document, 'click', '.downloader', function () {
             offlineSync();
@@ -677,7 +684,7 @@ define([
             contentAreaTop   = $(swipeContainerEl).offset().top;
             visiblePane      = $('#preloads-inner > #preload-1', swipeContainerEl)[0];
 
-            if (config.switches.swipeNavOnClick || userPrefs.isOn('swipe-nav-on-click')) {
+            if (config.switches.swipeNavOnClick || userPrefs.isOn('swipe-dev-on-click')) {
                 clickSelector = 'a:not([data-is-ajax])';
             }
 
@@ -688,8 +695,8 @@ define([
             setSequence(sequence);
 
             // Cache the config of the initial page, in case the 2nd swipe is backwards to this page.
-            if (sequenceCache[initialUrl]) {
-                sequenceCache[initialUrl].config = config;
+            if (sequenceURLs[initialUrl]) {
+                sequenceURLs[initialUrl].config = config;
             }
 
             start();
