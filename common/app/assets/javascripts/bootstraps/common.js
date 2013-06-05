@@ -69,14 +69,12 @@ define([
         upgradeImages: function () {
             var images = new Images();
             common.mediator.on('page:common:ready', function(config, context) {
-                if(!guardian.isOffline) {
-                    images.upgrade(context);
-                }
+                if(guardian.isOffline) { return; }
+                images.upgrade(context);
             });
             common.mediator.on('fragment:ready:images', function(context) {
-                if(!guardian.isOffline) {
-                    images.upgrade(context);
-                }
+                if(guardian.isOffline) { return; }
+                images.upgrade(context);
             });
         },
 
@@ -98,25 +96,22 @@ define([
         transcludeTopStories: function () {
             var topStories = new TopStories();
             common.mediator.on('page:common:ready', function(config, context) {
-                if(!guardian.isOffline) {
-                    topStories.load(config, context);
-                }
+                if(guardian.isOffline) { return; }
+                topStories.load(config, context);
             });
         },
 
         transcludeRelated: function () {
             common.mediator.on("page:common:ready", function(config, context){
-                if(!guardian.isOffline) {
-                    related(config, context);
-                }
+                if(guardian.isOffline) { return; }
+                related(config, context);
             });
         },
 
         transcludePopular: function () {
             common.mediator.on('page:common:ready', function(config, context) {
-                if(!guardian.isOffline) {
-                    popular(config, context);
-                }
+                if(guardian.isOffline) { return; }
+                popular(config, context);
             });
         },
 
@@ -141,12 +136,9 @@ define([
             var cs = new Clickstream({filter: ["a", "button"]}),
                 omniture = new Omniture();
 
-            common.mediator.on('page:common:deferred:loaded', function(config, context) {
-
-                if(!guardian.isOffline) {
-
-                    // AB must execute before Omniture
-                    AB.init(config, context);
+            common.mediator.on('page:common:deferred:loaded:omniture', function(config, context) {
+                omniture.go(config, function(){
+                    // callback:
 
                     omniture.go(config, function(){
                         // callback:
@@ -161,44 +153,55 @@ define([
                             }
                         });
                     });
+                });
+            });
 
-                    require(config.page.ophanUrl, function (Ophan) {
+            common.mediator.on('page:common:deferred:loaded', function(config, context) {
 
-                        if (!Ophan.isInitialised) {
-                            Ophan.isInitialised = true;
-                            Ophan.initLog();
+                if(!guardian.isOffline) { return; }
+
+                // AB must execute before Omniture
+                AB.init(config, context);
+
+                common.mediator.emit('page:common:deferred:loaded:omniture', config, context);
+
+                require(config.page.ophanUrl, function (Ophan) {
+
+                    if (!Ophan.isInitialised) {
+                        Ophan.isInitialised = true;
+                        Ophan.initLog();
+                    }
+
+                    Ophan.additionalViewData(function() {
+
+                        var viewData = {};
+
+                        var audsci = storage.get('gu.ads.audsci');
+                        if (audsci) {
+                            viewData.audsci_json = JSON.stringify(audsci);
                         }
 
-                        Ophan.additionalViewData(function() {
+                        if(AB.inTest(config.switches)) {
+                            var test = AB.getTest();
+                            viewData.experiments_json = JSON.stringify([{
+                                id: test.id,
+                                variant: test.variant
+                            }]);
+                        }
 
-                            var viewData = {};
-
-                            var audsci = storage.get('gu.ads.audsci');
-                            if (audsci) {
-                                viewData.audsci_json = JSON.stringify(audsci);
-                            }
-
-                            if(AB.inTest(config.switches)) {
-                                var test = AB.getTest();
-                                viewData.experiments_json = JSON.stringify([{
-                                    id: test.id,
-                                    variant: test.variant
-                                }]);
-                            }
-
-                            return viewData;
-                        });
-
-                        Ophan.sendLog(config.swipe ? config.swipe.referrer : undefined);
+                        return viewData;
                     });
-                }
+
+                    Ophan.sendLog(config.swipe ? config.swipe.referrer : undefined);
+                });
             });
         },
 
         loadAdverts: function () {
             if (!userPrefs.isOff('adverts')){
                 common.mediator.on('page:common:deferred:loaded', function(config, context) {
-                    if(!guardian.isOffline && config.switches && config.switches.adverts) {
+                    if(guardian.isOffline) { return; }
+                    if(config.switches && config.switches.adverts) {
                         Adverts.init(config, context);
                     }
                 });
