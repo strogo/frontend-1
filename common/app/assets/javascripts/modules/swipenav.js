@@ -311,7 +311,7 @@ define([
 
         // Delete all stored content that's not needed
         for (var k in storedKeys) {
-            storage.remove(key);
+            storage.remove(k);
         }
 
         if(offlineCount === offlineTotal) {
