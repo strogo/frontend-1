@@ -687,9 +687,8 @@ define([
             // Set the initial sequence
             setSequence(seq);
 
-            /* TODO
-             * Cache the config of the initial page, in case the 2nd swipe is backwards to this page.
-             */
+            // Attach config of the initial page to its pane.
+            visiblePane.config = config;
 
             start();
         });

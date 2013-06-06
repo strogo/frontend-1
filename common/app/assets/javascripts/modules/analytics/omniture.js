@@ -41,7 +41,7 @@ define([
             var storeObj,
                 delay;
 
-            if (!spec.tag) {
+            if (!s || !spec.tag) {
                 return;
             } else if (spec.sameHost && !spec.samePage) {
                 // Came from a link to a new page on the same host,
