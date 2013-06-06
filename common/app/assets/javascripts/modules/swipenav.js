@@ -112,7 +112,7 @@ define([
             el.bodyPart.innerHTML = pendingHTML;
 
             // Ask the cache
-            frag = offlineGet(url);
+            frag = cacheGet(url);
 
             // Is cached ?
             if (frag) {
@@ -337,13 +337,13 @@ define([
         }
     }
 
-    function offlineGet(url) {
+    function cacheGet(url) {
         return storage.get(storePrefix + url);
     }
 
     function cacheSet(url, frag) {
         // Add 5 minute expiry (= 300000ms)
-        return storage.set(storePrefix + url, frag, {expires: 10000 + (new Date()).getTime()});
+        return storage.set(storePrefix + url, frag, {expires: 300000 + (new Date()).getTime()});
     }
 
     function offlinePreload(url) {
@@ -593,7 +593,7 @@ define([
 
                 e.preventDefault();
 
-                if (window.guardian.isOffline && !offlineGet(url)) {
+                if (window.guardian.isOffline && !cacheGet(url)) {
                     if(window.confirm('Go back online to read this page?')) {
                         window.guardian.isOffline = false;
                     } else {
