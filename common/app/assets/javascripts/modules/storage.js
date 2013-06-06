@@ -45,8 +45,10 @@ define(['common'], function (common) {
             return w.localStorage.setItem(key, value);
         },
         
-        get: function(key) {
-            var data = w.localStorage.getItem(key);
+        get: function(key, options) {
+            var opts = options || {},
+                data = w.localStorage.getItem(key);
+
             if (data === null) {
                 return null;
             }
@@ -60,9 +62,9 @@ define(['common'], function (common) {
                 storage.remove(key);
                 return null;
             }
-            
+
             // has it expired?
-            if (dataParsed.expires && new Date() > new Date(dataParsed.expires)) {
+            if (dataParsed.expires && !opts.ignoreExpiry && new Date() > new Date(dataParsed.expires)) {
                 storage.remove(key);
                 return null;
             }

@@ -112,7 +112,7 @@ define([
             el.bodyPart.innerHTML = pendingHTML;
 
             // Ask the cache
-            frag = cacheGet(url);
+            frag = cacheGet(url, {ignoreExpiry: window.guardian.isOffline});
 
             // Is cached ?
             if (frag) {
@@ -225,7 +225,7 @@ define([
     function loadSequence(callback) {
         var section = window.location.pathname.match(/^\/[^\/]+/),
             url = '/front-trails' + (section ? section[0] : ''),
-            stories = cacheGet(url),
+            stories = cacheGet(url, {ignoreExpiry: window.guardian.isOffline}),
             xhr;
 
         if (stories) {
@@ -343,8 +343,8 @@ define([
         }
     }
 
-    function cacheGet(url) {
-        return storage.get(storePrefix + url);
+    function cacheGet(url, opts) {
+        return storage.get(storePrefix + url, opts);
     }
 
     function cacheSet(url, frag, xhr) {
@@ -606,7 +606,7 @@ define([
 
                 e.preventDefault();
 
-                if (window.guardian.isOffline && !cacheGet(url)) {
+                if (window.guardian.isOffline && !cacheGet(url, {ignoreExpiry: window.guardian.isOffline})) {
                     if(window.confirm('Go back online to read this page?')) {
                         window.guardian.isOffline = false;
                     } else {
