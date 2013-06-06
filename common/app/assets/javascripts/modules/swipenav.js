@@ -40,7 +40,6 @@ define([
         referrerPageName,
         sequencePos = -1,
         sequence = [],
-        sequenceURLs,
         sequenceLen = 0,
         storePrefix = 'gu.swipe.cache.',
         swipeContainer = '#preloads',
@@ -202,8 +201,8 @@ define([
         referrerPageName = config.page.analyticsName;
 
         if (clickSelector && initiatedBy === 'click' && !window.guardian.isOffline) {
-            loadSequence(function(sequence){
-                setSequence(sequence);
+            loadSequence(function(seq){
+                setSequence(seq);
                 loadSidePanes();
             });
         } else {
@@ -216,25 +215,20 @@ define([
     }
 
     function getSequencePos(url) {
-        for (var i = 0; i < sequenceLen; i += 1) {
-            if (sequence[i] === url) {
-                return i;
-            }
-        }
-        return -1;
+        return sequence.indexOf(url);
     }
 
     function getSequenceUrl(pos) {
-        return pos > -1 && pos < sequenceLen ? sequence[pos].url : sequence[0].url;
+        return pos > -1 && pos < sequenceLen ? sequence[pos] : sequence[0];
     }
 
     function loadSequence(callback) {
         var section = window.location.pathname.match(/^\/[^\/]+/);
         ajax({
             url: '/front-trails' + (section ? section[0] : ''),
-            type: 'jsonp',
-            jsonpCallbackName: 'loadSequence',
-            //crossOrigin: true,
+            type: 'json',
+            //jsonpCallbackName: 'loadSequence',
+            crossOrigin: true,
             success: function (json) {
                 if (json.stories && json.stories.length >= 3) {
                     callback(json.stories);
@@ -247,32 +241,34 @@ define([
         var len = arr.length,
             url = window.location.pathname,
             sectionUrl = url.match(/^\/[^\/]*/)[0],
-            s,
+            URLs = [],
+            uniqueURLs = {},
+            u,
             i;
 
         if (len) {
+            for (i = 0; i < len; i += 1) {
+                URLs.push(arr[i].url);
+            }
 
             // Make sure url is the first in the sequence
-            if(arr[0].url !== url) {
-                arr.unshift({url: url});
+            if(URLs[0] !== url) {
+                URLs.unshift(url);
                 len += 1;
             }
 
             // Add the "section" page as the last position in the sequence
-            arr.push({url: sectionUrl});
+            URLs.push(sectionUrl);
             len += 1;
 
+            // Now create the deduped sequence
             sequence = [];
             sequenceLen = 0;
-            sequenceURLs = {};
-
             for (i = 0; i < len; i += 1) {
-                s = arr[i];
-                // dedupe, while also creating a lookup obj
-                if(!sequenceURLs[s.url]) {
-                    s.pos = sequenceLen;
-                    sequenceURLs[s.url] = s;
-                    sequence.push(s);
+                u = URLs[i];
+                if(!uniqueURLs[u]) {
+                    uniqueURLs[u] = true;
+                    sequence.push(u);
                     sequenceLen += 1;
                 }
             }
@@ -283,26 +279,27 @@ define([
     function offlineSync() {
         var storedKeys = storage.keysByPrefix(storePrefix),
             key,
-            url;
+            url,
+            preloadUrls = sequence.concat([
+                "/",
+                "/uk",
+                "/world",
+                "/commentisfree",
+                "/sport",
+                "/football",
+                "/lifeandstyle",
+                "/culture",
+                "/business",
+                "/travel",
+                "/technology",
+                "/environment"
+            ]);
 
         offlineCount = 0;
         offlineTotal = 0;
 
-        sequenceURLs["/"] = true;
-        sequenceURLs["/uk"] = true;
-        sequenceURLs["/world"] = true;
-        sequenceURLs["/commentisfree"] = true;
-        sequenceURLs["/sport"] = true;
-        sequenceURLs["/football"] = true;
-        sequenceURLs["/lifeandstyle"] = true;
-        sequenceURLs["/culture"] = true;
-        sequenceURLs["/business"] = true;
-        sequenceURLs["/travel"] = true;
-        sequenceURLs["/technology"] = true;
-        sequenceURLs["/environment"] = true;
-
         // Load all un-stored content
-        for (url in sequenceURLs) {
+        preloadUrls.forEach(function(url) {
             key = [storePrefix + url];
             if (storedKeys[key]) {
                 delete storedKeys[key];
@@ -310,10 +307,10 @@ define([
                 offlinePreload(url);
                 offlineTotal += 1;
             }
-        }
+        });
 
         // Delete all stored content that's not needed
-        for (key in storedKeys) {
+        for (var k in storedKeys) {
             storage.remove(key);
         }
 
@@ -524,10 +521,6 @@ define([
 
         loadSidePanes: loadSidePanes,
 
-        getSequence: function(){
-            return sequence;
-        },
-
         gotoSequencePage: function(pos, type){
             initiatedBy = type ? type.toString() : 'position';
             gotoSequencePage(pos, type);
@@ -673,7 +666,7 @@ define([
     }
 
     var initialise = function(config) {
-        loadSequence(function(sequence){
+        loadSequence(function(seq){
             var loc = window.location.href;
 
             initialUrl       = urlAbsPath(loc);
@@ -692,12 +685,11 @@ define([
             prepareDOM();
 
             // Set the initial sequence
-            setSequence(sequence);
+            setSequence(seq);
 
-            // Cache the config of the initial page, in case the 2nd swipe is backwards to this page.
-            if (sequenceURLs[initialUrl]) {
-                sequenceURLs[initialUrl].config = config;
-            }
+            /* TODO
+             * Cache the config of the initial page, in case the 2nd swipe is backwards to this page.
+             */
 
             start();
         });
