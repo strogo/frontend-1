@@ -97,7 +97,7 @@ define([
     }
 
     function load(o) {
-        var
+        var xhr,
             url = o.url,
             el = o.container,
             callback = o.callback || noop,
@@ -121,7 +121,7 @@ define([
                 callback();
             } else {
                 el.pending = true;
-                ajax({
+                xhr = ajax({
                     url: url,
                     method: 'get',
                     type: 'json',
@@ -135,6 +135,7 @@ define([
                             common.mediator.emit('module:swipenav:pane:loaded', el);
                             callback();
                         }
+                        //console.log(xhr.request.getResponseHeader('Expires'));
                     }
                 });
             }
