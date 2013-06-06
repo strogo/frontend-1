@@ -96,7 +96,7 @@ define([
         bonzo(page2).append(foot.cloneNode(true));
     }
 
-    function load(o) {
+    function loadPane(o) {
         var xhr,
             url = o.url,
             el = o.container,
@@ -104,8 +104,8 @@ define([
             frag;
 
         if (url && el) {
-            el.dataset = el.dataset || {};
-            el.dataset.url = url;
+            el = el || {};
+            el.url = url;
             
             // Associate a contenet area with this pane, if not already done so
             el.bodyPart = el.bodyPart || el.querySelector(bodyPartSelector);
@@ -123,19 +123,18 @@ define([
                 el.pending = true;
                 xhr = ajax({
                     url: url,
-                    method: 'get',
                     type: 'json',
                     crossOrigin: true,
                     success: function (frag) {
-                        delete el.pending;
-                        frag   = frag || {};
-                        cacheSet(url, frag);
-                        if (el.dataset.url === url) {
-                            populate(el, frag);
-                            common.mediator.emit('module:swipenav:pane:loaded', el);
-                            callback();
+                        if (frag) {
+                            cacheSet(url, frag, xhr);
+                            delete el.pending;
+                            if (el.url === url) {
+                                populate(el, frag);
+                                common.mediator.emit('module:swipenav:pane:loaded', el);
+                                callback();
+                            }
                         }
-                        //console.log(xhr.request.getResponseHeader('Expires'));
                     }
                 });
             }
@@ -170,7 +169,7 @@ define([
             return;
         }
 
-        url    = context.dataset.url;
+        url    = context.url;
         config = context.config || {};
         config.page = config.page || {};
 
@@ -224,18 +223,24 @@ define([
     }
 
     function loadSequence(callback) {
-        var section = window.location.pathname.match(/^\/[^\/]+/);
-        ajax({
-            url: '/front-trails' + (section ? section[0] : ''),
-            type: 'json',
-            //jsonpCallbackName: 'loadSequence',
-            crossOrigin: true,
-            success: function (json) {
-                if (json.stories && json.stories.length >= 3) {
+        var section = window.location.pathname.match(/^\/[^\/]+/),
+            url = '/front-trails' + (section ? section[0] : ''),
+            stories = cacheGet(url),
+            xhr;
+
+        if (stories) {
+            callback(stories);
+        } else {
+            xhr = ajax({
+                url: url,
+                type: 'json',
+                crossOrigin: true,
+                success: function (json) {
+                    cacheSet(url, json.stories, xhr);
                     callback(json.stories);
                 }
-            }
-        });
+            });
+        }
     }
 
     function setSequence(arr) {
@@ -342,15 +347,22 @@ define([
         return storage.get(storePrefix + url);
     }
 
-    function cacheSet(url, frag) {
-        // Add 5 minute expiry (= 300000ms)
-        return storage.set(storePrefix + url, frag, {expires: 300000 + (new Date()).getTime()});
+    function cacheSet(url, frag, xhr) {
+        var cacheSecs;
+        if (xhr) {
+            cacheSecs = xhr.request ? xhr.request.getResponseHeader('Cache-Control') : undefined;
+            cacheSecs = cacheSecs ? cacheSecs.match(/max-age=(\d+)/) : undefined;
+            cacheSecs = cacheSecs ? parseInt(cacheSecs[1], 10) : undefined;
+        }
+        cacheSecs = cacheSecs ? cacheSecs : 300;
+        return storage.set(storePrefix + url, frag, {
+            expires: cacheSecs * 1000 + (new Date()).getTime()
+        });
     }
 
     function offlinePreload(url) {
-        ajax({
+        var xhr = ajax({
             url: url,
-            method: 'get',
             type: 'json',
             crossOrigin: true,
             success: function (frag) {
@@ -362,7 +374,7 @@ define([
                 config = frag.config;
 
                 if(html && config) {
-                    cacheSet(url, frag);
+                    cacheSet(url, frag, xhr);
                     extractImages(html);
                     common.mediator.emit('module:swipenav:offline:load');
                 }
@@ -457,13 +469,13 @@ define([
         el = panes.masterPages[mod3(paneNow + dir)];
         
         // Only load if not already loaded into this pane
-        if (el.dataset.url !== url) {
-            load({
+        if (el.url !== url) {
+            loadPane({
                 url: url,
                 container: el,
                 callback: function () {
                     // before slideInPane, confirm that this pane hasn't had its url changed since the request was made
-                    if (doSlideIn && el.dataset.url === url) {
+                    if (doSlideIn && el.url === url) {
                         slideInPane(dir);
                     }
                 }
@@ -570,7 +582,7 @@ define([
 
         // Identify and annotate the initially visible pane
         visiblePane = panes.masterPages[1];
-        visiblePane.dataset.url = initialUrl;
+        visiblePane.url = initialUrl;
 
         // Set a body class. Might be useful.
         body.addClass('has-swipe');
