@@ -29,7 +29,8 @@ define([
     'modules/debug',
     'modules/experiments/ab',
     'modules/swipenav',
-    "modules/adverts/video"
+    "modules/adverts/video",
+    "modules/experiments/aware"
 ], function (
     common,
     ajax,
@@ -60,7 +61,8 @@ define([
     Debug,
     AB,
     swipeNav,
-    VideoAdvert
+    VideoAdvert,
+    Aware
 ) {
 
     var modules = {
@@ -123,6 +125,12 @@ define([
             });
             common.mediator.on('fragment:ready:dates', function(el) {
                 dates.init(el);
+            });
+        },
+        
+        aware: function() {
+            common.mediator.on('page:article:ready', function(config, context) {
+                Aware.logVisit(config.page);
             });
         },
 
@@ -268,6 +276,9 @@ define([
             modules.initialiseNavigation(config);
             modules.loadVideoAdverts(config);
             modules.initSwipe(config);
+            if (config.switches.aware) {
+                modules.aware();
+            }
         }
         common.mediator.emit("page:common:ready", config, context);
     };
