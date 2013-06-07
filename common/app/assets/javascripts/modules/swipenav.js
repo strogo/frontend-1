@@ -208,6 +208,8 @@ define([
         } else {
             loadSidePanes();
         }
+
+        clearCacheExpired();
     }
 
     function setSequencePos(url) {
@@ -327,6 +329,19 @@ define([
         }
     }
 
+    function clearCacheExpired() {
+        var storedKeys,
+            key;
+
+        if (window.guardian.isOffline) { return; }
+
+        storedKeys = storage.keysByPrefix(storePrefix);
+
+        for (key in storedKeys) {
+            cacheGetKey(key); // This'll flush the key if it's expired
+        }
+    }
+
     function showOfflineCount() {
         var el = visiblePane.querySelector('.downloader'),
             width;
@@ -344,7 +359,11 @@ define([
     }
 
     function cacheGet(url, opts) {
-        return storage.get(storePrefix + url, opts);
+        cacheGetKey(storePrefix + url, opts);
+    }
+
+    function cacheGetKey(key, opts) {
+        return storage.get(key, opts);
     }
 
     function cacheSet(url, frag, xhr) {
