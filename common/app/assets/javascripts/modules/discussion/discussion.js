@@ -38,13 +38,16 @@ define([
             self;
 
         return {
-            init: function() {
+            init: function(opts) {
+                opts = opts || {};
+                ajax = opts.ajax || ajax; // For unit tests
+
                 if (config.page.commentable === true &&
                     (config.switches.discussion === true || userPrefs.isOn('discussion-dev'))) {
 
                         self = this;
                         self.discussionUrl           = '/discussion' + discussionId;
-                        self.discussionCountUrl      = config.page.discussionApiUrl + '/discussion/'+discussionId+'/comments/count';
+                        self.discussionCountUrl      = config.page.discussionApiUrl + '/discussion'+discussionId+'/comments/count';
                         self.discussionContainerNode = context.querySelector(discussionContainer);
                         self.articleContainerNode    = context.querySelector(articleContainer);
                         self.mediaPrimaryNode        = context.querySelector(mediaPrimary);
@@ -61,8 +64,11 @@ define([
                                 self.bindEvents();
                             }
                         });
-                }
 
+                        return self;
+                } else {
+                    return false;
+                }
             },
 
             upgradeByline: function(commentCount) {
@@ -87,6 +93,7 @@ define([
                 } else {
                     bonzo(context.querySelector('.article__container')).before(tabsHtml);
                 }
+
                 Array.prototype.forEach.call(context.querySelectorAll(".js-commentcount__number"), function(el) {
                     el.innerHTML = commentCount;
                 });
