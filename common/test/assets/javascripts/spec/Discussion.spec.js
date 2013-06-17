@@ -74,9 +74,7 @@ define(['common', 'ajax', 'fixtures', 'modules/discussion/discussion'], function
 
 
         it("should insert Discussion tabs if article has comments", function(){
-            runs(function() {
-                discussion.init();
-            });
+            discussion.init();
 
             waits(500);
 
@@ -102,16 +100,56 @@ define(['common', 'ajax', 'fixtures', 'modules/discussion/discussion'], function
 
 
         it("should fire off an AJAX request when the user clicks on Comments Tab", function(){
-            runs(function() {
-                discussion.init();
-            });
+            discussion.init();
 
             waits(500);
 
             runs(function() {
+                //console.log(document.querySelectorAll('.d-tabs').length);
+                //bean.fire(document.querySelector('.js-show-discussion'), 'click');
                 expect(document.querySelectorAll('.d-tabs').length).toBe(1);
             });
         });
+
+
+
+
+
+
+        /*it("should show a CTA to load more comments if there are any", function(){
+            discussion.init({
+                ajax: mockAjax
+            });
+
+            waits(500);
+
+            expect(document.querySelector('.js-show-more-comments').length).toBe(1);
+        });
+
+        it("should not show a CTA to load more comments if there aren't", function(){
+
+        });
+
+        it("should load a second page of comments when the 'Show more comments' CTA is clicked", function(){
+            discussion.init({
+                ajax: mockAjax
+            });
+
+            waits(500);
+
+            bean.fire(document.querySelector('.js-show-more-comments'), 'click');
+            expect(mockAjax.calls.length).toBe(1);
+        });
+
+        it("should only show a max of 3 responses on first load", function(){
+
+        });
+
+        it("should show a max of 25 additional responses when the CTA is clicked", function(){
+
+        });*/
+
+
 
     });
 });
