@@ -1,12 +1,12 @@
 package discussion
 
-import common.{InBodyLink, ExecutionContexts, Logging}
+import common.{ExecutionContexts, Logging}
+import common.DiscussionMetrics.DiscussionHttpTimingMetric
+import conf.Switches.ShortDiscussionSwitch
+import model._
 import play.api.libs.ws.{Response, WS}
 import play.api.libs.json.{JsNumber, JsObject, JsArray, Json}
-import model._
 import System.currentTimeMillis
-import conf.{CommonSwitches, DiscussionHttpTimingMetric}
-import CommonSwitches._
 import scala.concurrent.Future
 
 case class CommentPage(
@@ -75,7 +75,7 @@ trait DiscussionApi extends ExecutionContexts with Logging {
           CommentPage(
             id = s"discussion/$id",
             title = (json \ "discussion" \ "title").as[String],
-            contentUrl = InBodyLink((json \ "discussion" \ "webUrl").as[String]),
+            contentUrl = (json \ "discussion" \ "webUrl").as[String],
             comments = comments,
             currentPage =  (json \ "currentPage").as[Int],
             pages = (json \ "pages").as[Int]

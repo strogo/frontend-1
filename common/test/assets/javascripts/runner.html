@@ -65,6 +65,9 @@
   <script type="text/javascript" src="components/seedrandom/index.js"></script>
   <script type="text/javascript">
 
+    // adding the 'withCredentials' property, so reqwest thinks it can do cors
+    sinon.FakeXMLHttpRequest.prototype.withCredentials = false;
+
     window.onhashchange = function(){
       window.location.reload();
     }
@@ -177,15 +180,13 @@
         <li><a href="#TogglePanel">Toggle Panel</a></li>
         <li><a href="#PageConfig">Page Config</a></li>
         <li><a href="#Discussion">Discussion</a></li>
+        <li><a href="#CommentCount">Comment counts</a></li>
     </ul>
 
     <div id="test-cases">
 
         <!-- Related.spec -->
         <div class="js-related"></div>
-
-        <!-- Popular.spec -->
-        <div class="js-popular"></div>
 
         <!-- Expandables -->
         <style>
@@ -335,6 +336,11 @@
             <p href="#hello" id="click-me-slow" data-link-name="paragraph">Paragraph 'Link'</p>
             <a href="/foo" id="click-me-internal" data-link-name="internal link">Same-host link</a>
             <a href="http://google.com/foo" id="click-me-external" data-link-name="external link">Other-host link</a>
+            <span data-link-context="the outer context">
+              <span data-link-context="the inner context">
+                <button href="/foo" id="click-me-link-context" data-link-name="the contextual link">The link</button>
+              </span>
+            </span>
         </p>
     </div>
 

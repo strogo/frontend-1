@@ -1,33 +1,34 @@
 .cta {
     @extend %type-10;
-    line-height: 1em;
-    display: block;
+    line-height: 1;
     color: #545454;
+    text-align: center;
+    display: block;
     padding: $baseline*3 0 $baseline*3 0;
     margin: $baseline*2 0;
-    background-color: $mushroom;
-    text-align: center;
-    @include box-shadow(none);
-    text-shadow: none;
     border: none;
+    background-color: $mushroom;
+    text-shadow: none;
 
     &:link,
     &:visited {
         color: #545454;
     }
+    &,
     &:hover,
     &:active {
         @include box-shadow(none);
     }
 }
 button.cta {
-	width: 100%;
+    width: 100%;
 }
 
 .expander {
     @extend %type-8;
     display: block;
-    padding-top: 5px;
+    padding-top: 7px;
+    padding-bottom: 10px;
     color: #666666;
 }
 

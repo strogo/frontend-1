@@ -77,13 +77,13 @@ define([
         showTeamData: function(team, context) {
             var fixtures = new FootballFixtures({
                 prependTo: context.querySelector('.t2'),
-                path: '/football/api/teamfixtures/' + team,
+                path: '/football/api/teamfixtures/' + team + '.json',
                 expandable: false
             }).init();
 
             var table = new FootballTable({
                 prependTo: context.querySelector('.t3'),
-                path: '/football/api/teamtable/' + team
+                path: '/football/api/teamtable/' + team + '.json'
             }).init();
         },
 
@@ -121,8 +121,6 @@ define([
     };
 
     var ready = function(req, config, context) {
-        common.lazyLoadCss('football', config);
-
         var page = req.params.action;
 
         switch(page) {
@@ -178,7 +176,7 @@ define([
                 }
                 break;
         }
-    
+
         modules.showHomescreen(config);
     };
 

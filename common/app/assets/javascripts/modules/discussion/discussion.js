@@ -47,7 +47,7 @@ define([
 
                         self = this;
                         self.discussionUrl           = '/discussion' + discussionId;
-                        self.discussionCountUrl      = config.page.discussionApiUrl + '/discussion'+discussionId+'/comments/count';
+                        self.discussionCountUrl      = "/discussion/comment-counts.json?shortUrls=" + discussionId;
                         self.discussionContainerNode = context.querySelector(discussionContainer);
                         self.articleContainerNode    = context.querySelector(articleContainer);
                         self.mediaPrimaryNode        = context.querySelector(mediaPrimary);
@@ -72,8 +72,9 @@ define([
             },
 
             upgradeByline: function(commentCount) {
-                var bylineNode = bonzo(context.querySelector('.byline'));
-                var tabsHtml = '<div class="d-tabs">' +
+                var bylineNode = bonzo(context.querySelector('.byline')),
+                    isLive = (config.page.isLive) ? ' d-tabs--is-live' : '',
+                    tabsHtml = '<div class="d-tabs' + isLive + '">' +
                                  '<ol class="d-tabs__container unstyled">' +
                                  '  <li class="d-tabs__item d-tabs__item--byline d-tabs__item--is-active js-show-article" data-link-name="Article Tab" data-is-ajax>' +
                                       bylineNode.html() +
@@ -102,11 +103,13 @@ define([
             getCommentCount: function(callback) {
                 ajax({
                     url: self.discussionCountUrl,
-                    type: 'jsonp',
-                    jsonpCallback: 'callback',
-                    jsonpCallbackName: 'commentcount',
+                    type: 'json',
+                    method: 'get',
+                    crossOrigin: true,
                     success: function(response) {
-                        callback(response.numberOfComments);
+                        if(response && response.counts &&response.counts.length) {
+                            callback(response.counts[0].count);
+                        }
                     }
                 });
             },
@@ -120,7 +123,7 @@ define([
                 }
 
                 ajax({
-                    url: self.discussionUrl + '?page=' + page,
+                    url: self.discussionUrl + '.json?page=' + page,
                     type: 'json',
                     method: 'get',
                     crossOrigin: true,

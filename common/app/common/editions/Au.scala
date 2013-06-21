@@ -13,7 +13,11 @@ import contentapi.QueryDefaults
 //This object exists to be used with ItemTrailblockDescription and is not a real edition like the others.
 //All that is really being used is Edition.id, which is AU
 //It is not included in the Edition.all sequence
-object Au extends Edition("AU", "Australia edition", DateTimeZone.forID("Australia/Sydney")) with Sections with Zones with QueryDefaults {
+object Au extends Edition(
+  id = "AU",
+  displayName = "Australia edition",
+  DateTimeZone.forID("Australia/Sydney"),
+  hreflang = "en-au") with Sections with Zones with QueryDefaults {
 
   val cultureCustomBlock = CustomTrailblockDescription("culture", "Culture", numItemsVisible = 3, style = Some(Thumbnail)){
 
@@ -28,7 +32,7 @@ object Au extends Edition("AU", "Australia edition", DateTimeZone.forID("Austral
       .tag(s"-stage/stage,-artanddesign/art,-stage/theatre,-stage/dance,-stage/comedy,-stage/musicals,-artanddesign/photography,($supportedTypes)")
       .response
 
-    EditorsPicsAndLatest(promiseOfCulture)
+    EditorsPicsOrLeadContentAndLatest(promiseOfCulture)
   }
 
   val commentCustomBlock = CustomTrailblockDescription("commentisfree", "Comment is free", numItemsVisible = 3, style = Some(Featured)){
@@ -44,7 +48,7 @@ object Au extends Edition("AU", "Australia edition", DateTimeZone.forID("Austral
       .tag(s"world/australia,($supportedTypes)")
       .response
 
-    EditorsPicsAndLatest(promiseOfComment)
+    EditorsPicsOrLeadContentAndLatest(promiseOfComment)
   }
 
   val videoCustomBlock = CustomTrailblockDescription("type/video", "Video", numItemsVisible = 1, style = Some(Featured)){

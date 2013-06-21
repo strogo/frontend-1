@@ -8,7 +8,8 @@ import model.{MetaData, TrailblockDescription}
 abstract class Edition(
     val id: String,
     val displayName: String,
-    val timezone: DateTimeZone
+    val timezone: DateTimeZone,
+    val hreflang: String // see http://support.google.com/webmasters/bin/answer.py?hl=en&answer=189077
   ) {
   def configuredFronts: Map[String, Seq[TrailblockDescription]]
   def zones: Seq[Zone]
@@ -17,7 +18,11 @@ abstract class Edition(
 
 object Edition {
 
+  // gives templates an implicit edition
+  implicit def edition(implicit request: RequestHeader) = this(request)
+
   val defaultEdition = editions.Uk
+
   val all = Seq(
     editions.Uk,
     editions.Us
@@ -51,4 +56,27 @@ object Edition {
     val currentEdition = Edition(request)
     all.filter(_ != currentEdition)
   }
+}
+
+object Editionalise {
+  import common.editions.EditionalisedSections._
+
+  //TODO this scheme changes at some point (awaiting content api work)
+  def apply(id: String, edition: Edition, request: Option[RequestHeader] = None): String = {
+
+    // TODO temporarily support old style (non-editionalised) ids
+    val isLegacy = request.flatMap(Site(_)).isDefined
+
+    if (isLegacy || !isEditionalised(id)) {
+      id
+    } else {
+      id match {
+        case "" => s"${edition.id.toLowerCase}-edition"
+        case _ => s"$id/${edition.id.toLowerCase}-edition"
+      }
+    }
+  }
+
+  def apply(id: String, request: RequestHeader): String = this(id, Edition(request), Some(request))
+
 }

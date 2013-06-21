@@ -1,11 +1,10 @@
 package test
 
+import conf.Configuration
+import conf.Switches._
 import org.scalatest.matchers.ShouldMatchers
 import org.scalatest.{ GivenWhenThen, FeatureSpec }
 import collection.JavaConversions._
-import org.fluentlenium.core.domain.FluentWebElement
-import conf.{CommonSwitches, Configuration}
-import CommonSwitches._
 
 class ArticleFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatchers {
 
@@ -76,7 +75,7 @@ class ArticleFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatch
       HtmlUnit("/commentisfree/2012/aug/06/price-rivers-rain-greatest-privatisation") { browser =>
         import browser._
 
-        CommonSwitches.ImageServerSwitch.switchOn
+        ImageServerSwitch.switchOn
 
         Then("I should see the article's image")
         findFirst("[itemprop='associatedMedia primaryImageOfPage'] img[itemprop=contentURL]").getAttribute("src") should
@@ -159,7 +158,7 @@ class ArticleFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatch
 
         val inBodyImage = findFirst("figure[itemprop=associatedMedia]")
 
-        CommonSwitches.ImageServerSwitch.switchOn
+        ImageServerSwitch.switchOn
         inBodyImage.getAttribute("class") should be("img-extended")
         inBodyImage.findFirst("[itemprop=contentURL]").getAttribute("src") should
           endWith("sys-images/Travel/Late_offers/pictures/2012/10/11/1349951383662/Shops-in-Rainbow-Row-Char-001.jpg")
@@ -333,26 +332,28 @@ class ArticleFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatch
 
     scenario("Easily share an article via popular social media sites") {
 
-      Given("I read an aricle and want to share it with my friends")
+      Given("I read an article and want to share it with my friends")
       
-      CommonSwitches.SocialSwitch.switchOn
+      SocialSwitch.switchOn
       
       HtmlUnit("/film/2012/nov/11/margin-call-cosmopolis-friends-with-kids-dvd-review") { browser =>
         import browser._
 
+        val mailShareUrl = "mailto:?subject=Mark%20Kermode%27s%20DVD%20round-up&body=http%3A%2F%2Fwww.guardian.co.uk%2Ffilm%2F2012%2Fnov%2F11%2Fmargin-call-cosmopolis-friends-with-kids-dvd-review"
         val fbShareUrl = "http://m.facebook.com/dialog/feed?app_id=180444840287&display=touch&redirect_uri=http%3A%2F%2Fwww.guardian.co.uk%2Ffilm%2F2012%2Fnov%2F11%2Fmargin-call-cosmopolis-friends-with-kids-dvd-review&link=http%3A%2F%2Fwww.guardian.co.uk%2Ffilm%2F2012%2Fnov%2F11%2Fmargin-call-cosmopolis-friends-with-kids-dvd-review&ref=responsive"
         val twitterShareUrl = "https://twitter.com/intent/tweet?text=Mark+Kermode%27s+DVD+round-up&url=http%3A%2F%2Fwww.guardian.co.uk%2Ffilm%2F2012%2Fnov%2F11%2Fmargin-call-cosmopolis-friends-with-kids-dvd-review"
         val gplusShareUrl = "https://plus.google.com/share?url=http%3A%2F%2Fwww.guardian.co.uk%2Ffilm%2F2012%2Fnov%2F11%2Fmargin-call-cosmopolis-friends-with-kids-dvd-review&hl=en-GB&wwc=1"
 
         Then("I should see buttons for my favourite social network")
-        findFirst(".social .fb a").getAttribute("href") should be(fbShareUrl)
-        findFirst(".social .twitter a").getAttribute("href") should be(twitterShareUrl)
-        findFirst(".social .gplus a").getAttribute("href") should be(gplusShareUrl)
+        findFirst(".social__item--mail .social__action").getAttribute("href") should be(mailShareUrl)
+        findFirst(".social__item--fb .social__action").getAttribute("href") should be(fbShareUrl)
+        findFirst(".social__item--twitter .social__action").getAttribute("href") should be(twitterShareUrl)
+        findFirst(".social__item--gplus .social__action").getAttribute("href") should be(gplusShareUrl)
       }
       
       Given("I want to track the responsive share buttons using Facebook Insights")
       
-      CommonSwitches.SocialSwitch.switchOn
+      SocialSwitch.switchOn
 
       HtmlUnit("/film/2012/nov/11/margin-call-cosmopolis-friends-with-kids-dvd-review") { browser =>
         import browser._
@@ -360,7 +361,7 @@ class ArticleFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatch
         val fbShareTrackingToken = "ref=responsive"
 
         Then("I should pass Facebook a tracking token")
-        findFirst(".social .fb a").getAttribute("href") should include(fbShareTrackingToken)
+        findFirst(".social__item--fb .social__action").getAttribute("href") should include(fbShareTrackingToken)
       }
 
 
@@ -371,8 +372,8 @@ class ArticleFeatureTest extends FeatureSpec with GivenWhenThen with ShouldMatch
 
       Given("I read an article")
       
-      CommonSwitches.SocialSwitch.switchOn
-      CommonSwitches.SearchSwitch.switchOn
+      SocialSwitch.switchOn
+      SearchSwitch.switchOn
       
       HtmlUnit("/world/2013/jan/27/brazil-nightclub-blaze-high-death-toll") { browser =>
         import browser._
