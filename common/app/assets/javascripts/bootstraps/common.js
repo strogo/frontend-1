@@ -80,15 +80,16 @@ define([
         initialiseNavigation: function (config) {
             var navControl = new NavControl(),
                 topStories = new TopStories(),
-                sections = new Sections(),
+                sections = new Sections(config),
                 search = new Search(config),
                 aus = new Australia(config),
                 editions = new EditionSwitch(),
                 header = document.querySelector('body');
 
+
+            sections.init(header);
             navControl.init(header);
             topStories.load(config, header);
-            sections.init(header);
             search.init(header);
             aus.init(header);
 
@@ -259,6 +260,29 @@ define([
                     }
                 });
             }
+        },
+
+        paragraphSpacing: function(config) {
+            // NOTE: force user's to view particular paragraph spacing - can be deleted
+            // TODO: ability to force user in particular ab test
+            var hash = window.location.hash,
+                storageKey = 'gu.test.paragraph-spacing',
+                test = (hash.indexOf('#paragraph-spacing=') === 0) ? hash.split('=')[1] : storage.get(storageKey);
+            if (test) {
+                ['control', 'no-spacing-indents', 'more-spacing'].some(function(validTest) {
+                    if (test === validTest) {
+                        if (config.page.contentType === 'Article') {
+                            // remove any existing 'test-paragraph-spacing--' classes (added by the ab test)
+                            document.body.className = document.body.className.replace(/(\s|^)test-paragraph-spacing--[^\s]*/g, '')
+                                + ' test-paragraph-spacing--' + test;
+                            // force ab test off, in case it runs later
+                            config.switches.abParagraphSpacing = false;
+                        }
+                        storage.set(storageKey, test);
+                        return true;
+                    }
+                });
+            }
         }
     };
 
@@ -281,6 +305,7 @@ define([
     var ready = function (config, context) {
         if (!this.initialised) {
             this.initialised = true;
+            modules.paragraphSpacing(config);
             modules.upgradeImages();
             modules.showTabs();
             modules.showRelativeDates();
