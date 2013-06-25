@@ -18,6 +18,7 @@ object ImageController extends Controller with Logging with Implicits with Execu
       case "c" => renderImage(target, mode, model.image.Contributor)
       case "g" => renderImage(target, mode, model.image.Gallery)
       case "n" => renderImage(target, mode, model.image.Naked)
+      case "t" => renderImage(target, mode, model.image.TrailDefault)
       case _ => NotFound
     }
   }

@@ -17,6 +17,10 @@ object Naked extends ImageType {
   val prefix = "n"
 }
 
+object TrailDefault extends ImageType {
+  val prefix = "t"
+}
+
 object ImgSrc {
 
   val imageHost = Configuration.images.path
