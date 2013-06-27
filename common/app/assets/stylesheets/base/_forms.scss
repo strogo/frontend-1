@@ -1,0 +1,14 @@
+/**
+ * 1. Avoid the WebKit bug in Android 4.0.* where (2) destroys native `audio`
+ *    and `video` controls.
+ * 2. Remove gradient background on Firefox OS when only setting
+ *    `background-color` on these elements
+ * 3. Remove rounded corners in Firefox OS
+ */
+
+button,
+html input[type="button"], /* 1 */
+input[type="reset"],
+input[type="submit"] {
+    background: inherit; /* 2 */
+}
