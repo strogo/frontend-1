@@ -1,8 +1,8 @@
 var specs = Object.keys(window.__karma__.files).filter(function (file) {
-    return (/\.spec\.js$/).test(file);
+    return (/Url\.spec\.js$/).test(file);
 });
 require.config({
-    'baseUrl': "../../../app/assets/javascripts/",
+    'baseUrl': "/base/common/app/assets/javascripts/",
     'paths': {
         'common':       'common',
         'bonzo':        'components/bonzo/src/bonzo',
