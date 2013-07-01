@@ -57,6 +57,8 @@ define(['common', 'ajax', 'modules/related'], function(common, ajax, Related) {
                 );
             });
 
+            console.log('poop foop');
+
             waits(500);
 
             runs(function(){
