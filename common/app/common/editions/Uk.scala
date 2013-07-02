@@ -16,30 +16,33 @@ object Uk extends Edition(
 
   implicit val UK = Uk
   val zones = Seq(
-    newsZone,
-    sportZone,
+    ukZone,
+    worldZone,
     cifZone,
+    sportZone,
+    lifeandstyleZone,
     cultureZone,
-    technologyZone,
     businessZone,
     moneyZone,
-    lifeandstyleZone,
-    travelZone
+    travelZone,
+    technologyZone,
+    environmentZone
   )
 
   def navigation(metadata: MetaData) = Seq(
       NavItem(home),
       NavItem(uk, Seq(politics, media, science, society, health, education)),
-      NavItem(world, Seq(us, europe, middleeast, asiapacific, africa, americas)),
-      NavItem(cif, Seq(cifbelief, cifgreen)),
-      NavItem(sport, Seq(football, cricket, tennis, rugbyunion, cycling)),
+      NavItem(world, Seq(us, europe, africa, asia, australia, americas)),
+      NavItem(cif, Seq(cifus, cifbelief)),
+      NavItem(sport, Seq(football, cricket, tennis, rugbyunion, cycling, ussport)),
       footballNav(metadata),
-      NavItem(lifeandstyle, Seq(foodanddrink, fashion, relationships, healthandwellbeing, women)),
-      NavItem(culture, Seq(film, music, books, televisionandradio, artanddesign, stage)),
-      NavItem(business, Seq(economics, banking, property, workandcareers, savings)),
-      NavItem(travel, Seq(shortbreaks, uktravel, europetravel, hotels, resturants)),
-      NavItem(technology, Seq(internet, games, mobilephones, appsblog)),
-      NavItem(environment, Seq(climatechange, wildlife, energy, conservation, food))
+      NavItem(lifeandstyle, Seq(foodanddrink, fashion, homes, women, loveandfamily, wellbeing)),
+      NavItem(culture, Seq(film, televisionandradio, music, books, artanddesign, theatre)),
+      NavItem(business, Seq(economics, eurozonecrisis, banking, retail, opinion)),
+      NavItem(money, Seq(consumer, property, workandcareers, saving, borrowing)),
+      NavItem(travel, Seq(shortbreaks, top10s, uktravel, europetravel, hotels, travelfoodanddrink)),
+      NavItem(technology, Seq(games, mobiles, apps, apple, google)),
+      NavItem(environment, Seq(climatechange, wildlife, energy, conservation, food, environmentopinion))
     )
 
 

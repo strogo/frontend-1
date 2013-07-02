@@ -16,30 +16,31 @@ object Us extends Edition(
 
   implicit val US = Us
   val zones = Seq(
-    newsZone,
-    sportsZone,
+    usZone,
+    worldZone,
     cifZone,
+    sportsZone,
     cultureZone,
-    technologyZone,
-    businessZone,
-    moneyZone,
     lifeandstyleZone,
-    travelZone
+    businessZone,
+    travelZone,
+    technologyZone,
+    environmentZone
   )
 
   def navigation(metadata: MetaData) = Seq(
     NavItem(home),
-    NavItem(us),
-    NavItem(world, Seq(us, europe, middleeast, asiapacific, africa, americas)),
-    NavItem(sports, Seq(nfl, mlb, nba, mls, nhl, football)),
-    footballNav(metadata),
-    NavItem(cif, Seq(cifbelief, cifgreen)),
-    NavItem(lifeandstyle, Seq(foodanddrink, fashion, relationships, healthandwellbeing, women)),
-    NavItem(culture, Seq(film, music, books, televisionandradio, artanddesign, stage)),
-    NavItem(business, Seq(economics, banking, property, workandcareers, savings)),
-    NavItem(technology, Seq(internet, games, mobilephones, appsblog)),
-    NavItem(environment, Seq(climatechange, wildlife, energy, conservation, food)),
-    NavItem(media)
+    NavItem(us, Seq(uspolitics, useconomy, science, media)),
+    NavItem(world, Seq(uk, europe, middleeast, asia, latinamerica, africa)),
+    NavItem(cif, Seq(cifglenng, cifanamcox, cifmichaelw, cifheidim, cifjillf, cifharrye)),
+    NavItem(sports, Seq(soccer, mls, nfl, mlb, nba)),
+    NavItem(culture, Seq(film, televisionandradio, books, artanddesign, music, theater)),
+    NavItem(lifeandstyle, Seq(celebrity, foodanddrink, wellness, family, fashionandbeauty, relationships)),
+    NavItem(business, Seq(economy, worldeconomy, eurozone, personalfinance)),
+    NavItem(travel, Seq(ustravel, uktravel, toptens, hotels, barsandrestaurants)),
+    NavItem(technology, Seq(games, mobiles, apps, computing)),
+    NavItem(environment, Seq(climatechange, energy, sustainability, wildlife)),
+    footballNav(metadata)
   )
 
 
