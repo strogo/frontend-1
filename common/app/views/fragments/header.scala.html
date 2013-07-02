@@ -6,6 +6,7 @@
         <a @SiteOr{ site => href="/" }{ href="@LinkTo{/}" }
             id="logo" class="i i-guardian-logo" data-link-name="site logo">The Guardian</a>
 
+        @*
         <div class="nav-container">
             <ul class="nav nav--global" data-link-name="Sections">
                 @Edition(request).navigation(page).map{ nav =>
@@ -15,10 +16,11 @@
                 }
             </ul>
         </div>
+        *@
 
-        <a href="#footer-nav" data-link-name="Sections" data-control-for="nav-popup-sections" class="control control--sections">
+        <a href="#footer-nav" data-link-name="Sections" data-control-for="nav-popup-sections" class="control control--sections is-active">
             <i class="i i-nav-divider"></i>
-            <span class="control__menu i i-menu">Sections</span>
+            <span class="control__menu i i-menu i-menu-active">Sections</span>
             <i class="i i-menu-active"></i>
         </a>
 
@@ -37,6 +39,7 @@
             <i class="i i-top-stories"></i>
         </a>
 
+        @*
         <div class="nav-popup-topstories nav-popup nav-popup--box is-off" data-link-context="front-trails/news"></div>
 
         <div class="nav-popup-search nav-popup nav-popup--box is-off"></div>
@@ -44,5 +47,204 @@
         <div class="nav-popup-sections nav-popup nav-popup--small is-off">
             @fragments.sections(page, false)
         </div>
+        *@
+
+        <div class="nav-popup xis-off">
+            <nav class="navigation" role="navigation">
+                <h2 class="h">Sections</h2>
+                <ul class="nav-toplevel">
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">UK news 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Politics 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Media 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Science 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Society 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Health 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Education 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">World news 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">US 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Europe 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Africa 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Asia 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Australia 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Americas 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Comment is free 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">CIF America 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">CIF Belief 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Contributors 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Cartoon 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Sport 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Football 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Cricket 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Tennis 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Rugby Union 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Cycling 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">US Sport 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Football 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Live scores 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Clubs 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Competitons 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Results 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Fixtures 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Tables 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Life &amp; style
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Food &amp; drink
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Fashion
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Homes
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Women
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Love &amp; family
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Wellbeing
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Culture 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Film 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">TV &amp; radio 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Music 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Books 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Art &amp; design 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Theatre 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Business 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Economics 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Eurozone crisis 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Euro 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Banking 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Retail 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Opinion 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Travel 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Short breaks 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Top 10s 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">UK 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Europe 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Hotels 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Food &amp; drink 
+            </a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Technology 
+             
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Games 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Mobiles &amp; tablets 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Apps 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Apple</a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Google</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-toplevel__item">
+                        <h3 class="nav-toplevel__header"><a href="" class="nav-toplevel__action">Environment 
+            </a></h3>
+                        <ul class="nav-sublevel">
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Climate change 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Wildlife 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Energy 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Conservation 
+            </a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Food</a></li>
+                            <li class="nav-sublevel__item"><a href="" class="nav-sublevel__action">Opinion</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
     </div>
 </header>
