@@ -1,0 +1,143 @@
+/* Layout changes breakpoints
+   ========================================================================== */
+
+$navigationLayoutJumps: 0, 320, gs-span(5), gs-span(7), gs-span(9), gs-span(11);
+
+@mixin navigation-layout-jump($from, $to: false) {
+    $min-width: nth($navigationLayoutJumps, $from);
+
+    @if ($to) {
+        $max-width: nth($navigationLayoutJumps, $to) - 1px;
+
+        @media (min-width: $min-width) and (max-width: $max-width) {
+            @content;
+        }
+    } @else {
+        @media (min-width: $min-width) {
+            @content;
+        }
+    }
+}
+
+
+/* Navigation
+   ========================================================================== */
+
+.nav-popup {
+    @include navigation-layout-jump(4) {
+        border-bottom-width: $baseline*1.5 !important;
+    }
+}
+
+.navigation {
+    font-size: 14px;
+    font-size: 1.4rem;
+    padding: 0 6px; // Should be $gutter/2 but we want it to be aligned with the logo
+}
+
+.nav-toplevel {
+    list-style-type: none;
+    margin: 0;
+}
+    .nav-toplevel__item {
+        float: left;
+        width: 50%;
+
+        @include navigation-layout-jump(3) {
+            margin-bottom: $gs-gutter * 2;
+        }
+        @include navigation-layout-jump(3, 4) {
+            width: (100%/3);
+
+            &:nth-child(3n+1) {
+                clear: both;
+            }
+        }
+        @include navigation-layout-jump(4, 6) {
+            width: (100%/4);
+
+            &:nth-child(4n+1) {
+                clear: both;
+            }
+        }
+        @include navigation-layout-jump(6) {
+            width: (100%/6);
+
+            &:nth-child(6n+1) {
+                clear: both;
+            }
+        }
+    }
+    .nav-toplevel__header {
+        margin: 0 $gs-gutter/2;
+        font-size: inherit;
+
+        .nav-toplevel__item + .nav-toplevel__item + .nav-toplevel__item & {
+            border-top: 1px solid $mushroom;
+        }
+
+        @include navigation-layout-jump(3) {
+            font-family: $serifheadline;
+            font-weight: 700;
+            border-top: none !important;
+        }
+    }
+    .nav-toplevel__action {
+        display: block;
+        padding-top: $baseline;
+        padding-bottom: $baseline*3;
+
+        &,
+        &:visited {
+            color: #333333;
+        }
+    }
+.nav-sublevel {
+    display: none;
+    list-style-type: none;
+    margin: 0 $gs-gutter/2;
+
+    @include navigation-layout-jump(3) {
+        display: block;
+    }
+}
+    .nav-sublevel__item {
+        border-top: 1px solid $mushroom;
+    }
+    .nav-sublevel__action {
+        display: block;
+        padding-top: $baseline;
+        padding-bottom: $baseline*3;
+
+        &,
+        &:visited {
+            color: #444444;
+        }
+    }
+
+
+/* Temporarily override current styling
+   ========================================================================== */
+
+#header:after {
+    background: none;
+    border: none;
+}
+@media (min-width: $tablet) {
+    .control--search {
+        right: 65px !important;
+    }
+    .control--topstories {
+        right: 113px !important;
+    }
+
+    .control--sections {
+        padding-top: 17px !important;
+        margin-top: 0 !important;
+        top: 0 !important;
+
+        &.is-active {
+            background: white !important;
+        }
+    }
+}
