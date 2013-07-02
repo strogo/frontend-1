@@ -1,5 +1,5 @@
 var specs = Object.keys(window.__karma__.files).filter(function (file) {
-    return (/Url\.spec\.js$/).test(file);
+    return (/Autoupdate\.spec\.js$/).test(file);
 });
 require.config({
     'baseUrl': "/base/common/app/assets/javascripts/",
@@ -10,7 +10,6 @@ require.config({
         'bean':         'components/bean/bean',
         'reqwest':      'components/reqwest/src/reqwest',
         'domwrite':     'components/dom-write/dom-write',
-        'analytics':    'modules/analytics',
         'EventEmitter': 'components/eventEmitter/EventEmitter',
         'swipe':        'components/swipe/swipe',
         'swipeview':    'components/swipeview/src/swipeview',

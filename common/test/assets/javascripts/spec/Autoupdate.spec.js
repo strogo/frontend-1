@@ -1,4 +1,4 @@
-define(['common', 'ajax', 'bean', 'modules/autoupdate', 'modules/storage'], function(common, ajax, bean, Autoupdate, storage) {
+define(['common', 'ajax', 'bean', 'modules/autoupdate', 'modules/storage', 'fixtures'], function(common, ajax, bean, Autoupdate, storage, fixtures) {
 
     describe("Auto update", function() {
 
@@ -17,6 +17,10 @@ define(['common', 'ajax', 'bean', 'modules/autoupdate', 'modules/storage'], func
         };
 
         beforeEach(function() {
+            fixtures.render({
+                id: 'update',
+                fixtures: ['<div id="update-area"></div>', '<div class="update"></div>']
+            });
             ajax.init({page: {
                 ajaxUrl: "",
                 edition: "UK"

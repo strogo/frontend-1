@@ -1,6 +1,6 @@
 /* global module: false */
 module.exports = function (grunt) {
-
+    var isTeamCity = process.env.TEAMCITY_REPORTER === 'true';
     var isDev = (grunt.option('dev')) || process.env.GRUNT_ISDEV === '1';
     if (isDev) {
         grunt.log.subhead('Running Grunt in DEV mode');
@@ -74,6 +74,23 @@ module.exports = function (grunt) {
                     useSourceUrl:  (isDev) ? true : false,
                     "preserveLicenseComments" : false
                 }
+            }
+        },
+
+        karma: {
+            options: {
+                runnerPort: 9999
+            },
+            common: {
+                configFile: 'karma.conf.js',
+                singleRun: true,
+                autoWatch: false,
+                // possible values: DISABLE || ERROR || WARN || INFO || DEBUG
+                logLevel: 'INFO',
+                // possible values: 'dots', 'progress', 'junit', 'teamcity'
+                reporters: isTeamCity ? ['teamcity'] : ['dots'],
+                colors: true,
+                browsers: ['PhantomJS']
             }
         },
 
@@ -208,9 +225,11 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-webfontjson');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-shell');
+    grunt.loadNpmTasks('grunt-karma');
 
     // Standard tasks
-    grunt.registerTask('test:common', ['jshint:common']);
+    grunt.registerTask('test:js:unit', ['karma:common']);
+    grunt.registerTask('test:common', ['jshint:common', 'test:js:unit']);
     grunt.registerTask('test', ['test:common']);
 
     grunt.registerTask('compile:common:css', ['sass:common']);
