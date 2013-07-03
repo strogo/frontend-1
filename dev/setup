@@ -1,0 +1,52 @@
+#!/bin/bash -e
+
+case "$1" in
+  ubuntu)
+    if [[ $EUID -ne 0 ]]; then
+       echo "ERROR: This command should be run as root" 1>&2
+       exit 1
+    fi
+
+    echo "Applying Ubuntu setup"
+    if [ ! $(which puppet) ]
+    then
+      apt-get install puppet
+    fi
+
+    puppet apply --debug --modulepath=ubuntu/modules site.pp
+    ;;
+
+  macosx)
+    if [[ $EUID -ne 0 ]]; then
+       echo "ERROR: This command should be run as root" 1>&2
+       exit 2
+    fi
+
+    echo "Applying Mac OS X setup"
+    if [ ! $(which gcc) ]
+    then
+      echo "ERROR: Cannot automatically install XCode. Download and install commandline tools from" 1>&2
+      echo " https://developer.apple.com/downloads" 1>&2
+      exit 3
+    fi
+
+    if [ ! $(which puppet) ]
+    then
+      echo "ERROR: Cannot automatically install Puppet. See instructions for manual install at" 1>&2
+      echo " http://docs.puppetlabs.com/guides/installation.html#mac-os-x" 1>&2
+      exit 4
+    fi
+
+    puppet apply --debug --modulepath=macosx/modules site.pp
+    ;;
+
+  repository)
+    echo "Applying repository package setup"
+    ./update-repository-packages
+    ;;
+
+  *)
+    echo "ERROR: Specify one of ubuntu|macosx|repository in 'setup <command>.'" 1>&2
+    exit 1
+    ;;
+esac

@@ -1,152 +1,164 @@
-Frontend
-========
+The source code for [m.guardian.co.uk](m.guardian.co.uk). You want in? We're
+[hiring](http://www.guardian.co.uk/workforus). Or check out CONTRIBUTING.md if
+you like the independence.
 
-The Guardian website frontend.
 
-New developers quick-start
-===========================
+Getting Started
+---------------
+Development is supported on Mac OS X 10.8 and Ubuntu 12.10 only. It may possibly
+work without changes elsewhere but I can't really help you with that.
 
-Frontend is a set of Play Framework 2 Scala applications.
+Broadly, the systems requirements are:
 
-Requirements
-------------
+* Ruby 2.0.0-p247 via rvm
+* Node.js and npm
+* Grunt
+* Bundler
+* Sass
+* GraphicsMagick
 
-* A Mac or Linux pc
-* Installed Node.js (https://github.com/joyent/node/wiki/Installing-Node.js-via-package-manager)
-* Installed npm (Node package manager - you quite possibly already have this) `sudo apt-get install npm`
-* Installed GraphicsMagick
-* Installed Grunt (build tool) `sudo npm -g install grunt-cli`
-* Installed Ruby >= v1.9.x & [bundler](http://gembundler.com/) (You will already have this installed, but run `ruby -v` to check version number)
 
-File handles
-------------
+(A complete Vagrant VM definition capable of running the system is provided if
+needed. Install VirtualBox and Vagrant and run `vagrant up` in the repository
+root. Use `vagrant ssh` to connect to the guest and change to `/vagrant` and
+continue below at Getting Started: Configuration.)
 
-On Linux machines you may run into a "too many files open" error during compilation or reloading. You can find out
-how many file handles you are allowed per process by running `ulimit -n`. This can be quite low, e.g. 1024
 
-To increase the limit do the following (instructions from Ubuntu 12.10)...
+### Getting Started: Ubuntu 12.10
+Run the setup script in `/dev`.
 
-In the file `/etc/security/limits.conf` add the following two lines
+    cd dev
+    sudo ./setup ubuntu
+
+
+### Getting Started: Mac OS X 10.8
+Sadly, Mac OS X setup is a little more involved than Ubuntu.
+
+You need to have the XCode tools installed. If you don't, you can get the XCode
+commandline tools [here](https://developer.apple.com/downloads).
+
+You will also need Puppet. Follow the instructions
+[here](http://docs.puppetlabs.com/guides/installation.html#mac-os-x) if you
+don't. Install, the following in order:
+
+* Facter: [facter-1.7.1.dmg](http://downloads.puppetlabs.com/mac/facter-1.7.1.dmg)
+* Hiera: [hiera-1.2.1.dmg](http://downloads.puppetlabs.com/mac/hiera-1.2.1.dmg)
+* Puppet: [puppet-3.2.2.dmg](http://downloads.puppetlabs.com/mac/puppet-3.2.2.dmg)
+
+
+Then run the setup script in `/dev`.
+
+    cd dev
+    sudo ./setup macosx
+
+
+
+### Getting Started: Configuration
+You'll need a config file called `~/.gu/frontend.properties` with the following
+content:
+
+```
+content.api.key=XXXX
+content.api.host=http://XXXX
+```
+
+Guardian developers can collect a copy of `frontend.properties` with working
+values from their kindly neighbourhood developer. External developers should
+sign up for a Content API key [here](http://guardian.mashery.com).
+
+Certain non-core functionality requires additional configuration:
+
+````
+pa.api.key=API key for Press Association feeds.
+
+aws.access.key=AWS credential for infrastructure services
+aws.access.secret.key=AWS credential for infrastructure services
+aws.region=AWS region for infrastructure services
+
+mongo.connection.password=A MongoDB connection string, funnily, thanks Grant!
+aws.bucket=S3 bucket for simple persistence.
+sns.notification.topic.arn=SNS notification topic for alerts.
+````
+
+
+
+### Getting Started: Running the Development Server
+Change back to the repository root and start Simple Build Tool (sbt).
+
+    ./sbt012
+
+Once sbt is running (it may take a while first time), select the `dev-build`
+uber project and run it (this too will take long the first time.)
+
+    project dev-build
+    run
+
+Then take a trip to the F5 recompiling development server at
+[localhost:9000](http://localhost:9000).
+
+Code, reload, ship, repeat.
+
+Further information on using the sbt/Play console is available
+[here][play2-console].
+
+
+
+### Getting Started: IntelliJ Project Files
+The sbt-idea plugin is available, so generating IntelliJ project files can be
+done in sbt with the `gen-idea` target:
+
+    ./sbt012 gen-idea
+
+
+
+
+Once You're Started
+-------------------
+
+### Deployment
+Deployment uses the [Magenta][magenta] library.
+
+
+### Debugging
+You can debug your local Frontend application, by attaching a debugger.
+
+* Start Simple Build Tool in debug mode by typing `./sbt012 --debug`
+* Build and run your application.
+* Use a debugger to attach to the remote Java process, on localhost:1044.
+
+Any IDE debugger should be compatible. In IntelliJ, add a new Debug
+Configuration, based on the Remote default. Ensure the Transport is Socket, the
+Debugger mode is Attach, and the port is set to 1044. Start a new Debug session,
+and your breakpoints should be active.
+
+
+### Error: "too many files open"
+On Linux machines you may run into a "too many files open" error during
+compilation or reloading. You can find out how many file handles you are allowed
+per process by running `ulimit -n`. This can be quite low, e.g. 1024.
+
+To increase the limit on Ubuntu 12.10, add the following to
+`/etc/security/limits.conf`:
+
 ```
 *  soft  nofile 20000
 *  hard  nofile 65000
 ```
 
-And in the file `/etc/pam.d/common-session` add the following line.
+And the following to `/etc/pam.d/common-session`:
+
 ```
 session required pam_limits.so
 ```
 
-restart the machine.
+And restart your machine.
 
-For more info see http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files/
-
-Configuration
--------------
-
-You'll need a config file called _/etc/gu/install_vars_ with the following content :-
-
-```
-STAGE=DEV
-INT_SERVICE_DOMAIN=gudev.gnl
-EXT_SERVICE_DOMAIN=
-```
-
-And one called _~/.gu/frontend.properties_, ( alternatively _/gu/etc/frontend.properties_ ) with the following content :-
-
-```
-content.api.key=XXXX
-content.api.host=http://XXXX
-pa.api.key=XXXX
-```
-
-Get the correct key and host from another developer on the project (or for external developers, sign up for a key at http://guardian.mashery.com).
-
-To set up a proxy
-
-```
-export proxy_host=proxy.somewhere.com
-export proxy_port=1234
-```
-
-Running
--------
-
-Assuming you have checked out this project, open a console and change directory into the root of the project.
-
-Start Simple Build Tool (sbt) by running `./sbt012`
-
-Once sbt is running (it may take a while first time) then compile the project by typing `compile` (also can take a while first time)
-
-Switch project by typing `project dev-build`
-
-Now start the local server by typing `run` (this too will take long the first time)
-
-Now test you are up and running by hitting the following URLs:
-   * http://localhost:9000/books
-   * http://localhost:9000/media/2012/dec/05/newspaper-editors-sign-up-leveson
-   * http://localhost:9000/news/gallery/2012/dec/04/24-hours-in-pictures-gallery
-
-
-To use in Eclipse, use the `eclipsify` command. This will create Eclipse
-project and settings files which can be imported using the Import Existing
-Project options in Eclipse.
-
-To use in IntelliJ, see https://github.com/mpeltonen/sbt-idea
-
-Further information on using the Play console is available [here][play2-console].
-
-Virtualisation
---------------
-Virtualisation provides for robust development environments and a controlled
-system dependency solution. See the instructions in `README.vagrant.md` for
-using [Vagrant][vagrant] virtualisation with this project.
-
-
-Endpoints
----------
-The available endpoints are listed in `conf/routes` of each application and
-typically include:
-
-* `/management`: Operations support as per standard webapp guidelines. See
-  guardian-management.
-* `/pages/<path>`: Serve the Guardian URL at `<path>` if supported by this
-  application.
-* `/assets/<file>`: A convenience for DEV machines. Assets are CDNed in PROD
-  and would not be available on DEV.
-* `/<path>`: A synonym for `/pages/<path>` as a convenience for DEV machines.
-
-
-Deploying
----------
-Deployment uses the [Magenta][magenta] library.
-
-Debugging
----------
-You can debug your local Frontend application, by attaching a debugger.
-
-* Start Simple Build Tool in debug mode by typing `./sbt012 --debug`
-* Build and run your application. See "Running" for steps.
-* Use a debugger to attach to the remote Java process, on localhost:1044.
-
-Any IDE debugger should be compatible. In IntelliJ, add a new Debug Configuration, based on the Remote default.
-Ensure the Transport is Socket, the Debugger mode is Attach, and the port is set to 1044.
-Start a new Debug session, and your breakpoints should be active.
-
-Additional Documentation
-------------------------
-Further documentation notes and useful items can be found in `dev`.
+See [here](http://www.cyberciti.biz/faq/linux-increase-the-maximum-number-of-open-files)
+for more information.
 
 
 [sbt]: http://www.scala-sbt.org
 [play2-console]: https://github.com/playframework/Play20/wiki/PlayConsole
 [play2-wiki]: https://github.com/playframework/Play20/wiki
-[sbteclipse]: https://github.com/typesafehub/sbteclipse
-[sbt-idea]: https://github.com/mpeltonen/sbt-idea
-[vagrant]: http://vagrantup.com
 [magenta]: https://github.com/guardian/deploy
-
-
-
-
 

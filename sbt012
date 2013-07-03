@@ -1,15 +1,10 @@
-#!/bin/bash
+#!/bin/bash -e
 
-#Node package management for Grunt build steps
+# Do internal repository package management
+pushd dev > /dev/null
+./update-repository-packages
+popd > /dev/null
 
-bundle install --system
-npm install
-
-NPM_EXIT=$?
-
-if [ $NPM_EXIT == "1" ]; then
-   exit 1
-fi
 
 #Install casperjs to target
 if [ ! -d dev/casperjs ]; then
@@ -20,18 +15,6 @@ if [ ! -d dev/casperjs ]; then
 fi
 export PATH=$PATH:$(pwd)/dev/casperjs/bin
 export PATH=$PATH:$(pwd)/node_modules/phantomjs/bin
-
-if [ -f "~/.sbtconfig" ]; then
-  . ~/.sbtconfig
-fi
-
-
-# SBT configuration
-export SBT_BOOT_DIR=${HOME}/.sbt/boot/
-
-if [ ! -d "${SBT_BOOT_DIR}" ]; then
-  mkdir -p ${SBT_BOOT_DIR}
-fi
 
 
 # Build configuration
@@ -60,22 +43,21 @@ do
       DEBUG_PARAMS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=1044"
       shift
     fi
-
 done
+
 
 # Grunt configuration
 export GRUNT_ISDEV=1
 
-#MaxPermSize specifies the the maximum size for the permanent generation heap,
-# a heap that holds objects such as classes and methods. Xmx is the heap size.
 
-java -Xmx4096M -XX:MaxPermSize=2048m \
-  -XX:ReservedCodeCacheSize=128m \
-  -Dsbt.boot.directory=$SBT_BOOT_DIR \
+# MaxPermSize specifies the the maximum size for the permanent generation heap,
+# a heap that holds objects such as classes and methods. Xmx is the heap size.
+JVM_ARGS="-Xmx4096M -XX:MaxPermSize=2048m -XX:ReservedCodeCacheSize=128m"
+
+java $JVM_ARGS \
   -Djava.awt.headless=true \
-  $DEBUG_PARAMS \
   -DAPP_SECRET="myKV8HQkjcaxygbDuyneHBeyFgsyyM8yCFFOxyDoT0QGuyrY7IyammSyP1VivCxS" \
   $BUILD_PARAMS \
   $IVY_PARAMS \
-  $SBT_EXTRA_PARAMS \
+  $DEBUG_PARAMS \
   -jar `dirname $0`/dev/sbt-launch-0.12.2.jar "$@"

@@ -1,0 +1,6 @@
+#!/bin/bash -e
+
+# Refresh Gem and NPM dependencies for Grunt build steps
+
+bundle install
+npm install

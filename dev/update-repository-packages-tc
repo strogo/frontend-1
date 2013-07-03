@@ -1,0 +1,7 @@
+#!/bin/bash -e
+
+# Refresh Gem and NPM dependencies for Grunt build steps
+
+export PATH=gems/bin:$PATH
+bundle install --binstubs gems/bin --path gems
+npm install

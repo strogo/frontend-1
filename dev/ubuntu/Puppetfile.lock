@@ -1,0 +1,8 @@
+FORGE
+  remote: http://forge.puppetlabs.com
+  specs:
+    willdurand/nodejs (0.0.3)
+
+DEPENDENCIES
+  willdurand/nodejs (>= 0)
+
