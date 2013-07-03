@@ -36,7 +36,7 @@ casper.then(function() {
         }, 10, 'Then I can see 10 top level comments');
 
 
-        this.test.assertSelectorHasText('.d-comment__author', 'tenacity', 'And the first comment is authored by "tenacity"');
+        this.test.assertSelectorHasText('.d-comment__author', 'fail', 'And the first comment is authored by "tenacity"');
 
     },function timeout(){
         casper.test.fail('Comments failed to load');
