@@ -2,7 +2,7 @@
 @import conf.Switches.DiscussionSwitch
 
 <div class="monocolumn-wrapper">
-    
+
     <h2 class="article-zone type-1">
         <a class="zone-color" data-link-name="article section" href="@LinkTo{/@article.section}">@Html(article.sectionName)</a>
     </h2>
@@ -22,7 +22,7 @@
 
         <div class="after-header"></div>
 
-         @if(!article.isLive  && !article.hasVideoAtTop) {
+         @if(!article.isLive && !article.hasVideoAtTop) {
              @article.mainPicture.map{ mainPicture =>
                  @article.mainPicture(width=220).map{ smallCrop =>
                      @fragments.img(mainPicture, smallCrop)
@@ -44,7 +44,7 @@
                      <thead>
                          <tr>
                              <th data-viz-display="false" data-viz-field-type="string">Party</th>
-                             <th data-viz-display="true" data-viz-field-type="integer" data-viz-field-unit="%">Share</th>
+                             <th data-viz-display="true"  data-viz-field-type="integer" data-viz-field-unit="%">Share</th>
                              <th data-viz-display="false" data-viz-field-type="string">Change</th>
                          </tr>
                      </thead>
@@ -82,6 +82,59 @@
                      </tbody>
                  </table>
                  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+                 <script>
+                    //define("doughnut", [], function ( ) {
+
+                        'use strict';
+
+                        /*---------------------------------
+                            Constructor
+                        ---------------------------------*/
+                        //var DougnutDemo = function(){
+
+                            //this.init = function() {
+                                this.displayObject = document.createElement('div');
+
+                                var doughnutSize = 200,
+                                    doughnutRadius = doughnutSize * 0.5,
+                                    data = [50,76,485,45,698],
+                                    colorData = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#00ffff'],
+
+                                    doughnut = d3.layout.pie().sort(null),
+                                    arc = d3.svg.arc().innerRadius(50).outerRadius(doughnutRadius),
+
+                                    svg = d3.select(this.displayObject)
+                                            .append("svg:svg")
+                                            .attr("width", doughnutSize)
+                                            .attr("height", doughnutSize)
+                                            .append("svg:g")
+                                            .attr("transform", "translate(" + doughnutRadius + "," + doughnutRadius + ")"),
+
+                                    arcs = svg.selectAll("path")
+                                              .data(doughnut(data))
+                                              .enter().append("svg:path")
+                                              .attr("fill", function(d, i) {return colorData[i]; })
+                                              .attr("d", arc)
+                                              .each(function(d) { this._current = d; });
+
+                                    svg.append('svg:text')
+                                       .attr('dx', -25)
+                                       .attr('dy', 20)
+                                       .attr("class", "someClassNameForYourText")
+                                       .text("%");
+                                       
+                                    document.querySelector('.article-body').appendChild(this.displayObject)
+                               //}
+                        //};
+
+                        //return DoughnutDemo;
+
+                    //});
+                    
+                    //require(['doughnut'], function(doughnut) {
+                    //    doughnut.init();
+                    //});
+                 </script>
 
                  @BodyCleaner(article)
             </div>
