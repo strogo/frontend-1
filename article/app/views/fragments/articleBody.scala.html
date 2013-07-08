@@ -39,6 +39,50 @@
 
              <div class="article-body from-content-api @if(article.isLive) {live-blog}"
              itemprop="@if(article.isReview){reviewBody} else {articleBody}">
+                 <h2>State of the parties</h2>
+                 <table summary="Change on last Guardian/ICM Poll" data-viz-type="doughnut">
+                     <thead>
+                         <tr>
+                             <th data-viz-display="false" data-viz-field-type="string">Party</th>
+                             <th data-viz-display="true" data-viz-field-type="integer" data-viz-field-unit="%">Share</th>
+                             <th data-viz-display="false" data-viz-field-type="string">Change</th>
+                         </tr>
+                     </thead>
+                     <tfoot>
+                         <tr>
+                             <td colspan="3">Source: Guardian/ICM</td>
+                         </tr>
+                     </tfoot>
+                     <tbody>
+                         <tr>
+                             <th data-viz-color="#D71E0C">Labour</th>
+                             <td>41</td>
+                             <td>+3</td>
+                         </tr>
+                         <tr>
+                             <th data-viz-color="#005DB7">Conservative</th>
+                             <td>29</td>
+                             <td>-4</td>
+                         </tr>
+                         <tr>
+                             <th data-viz-color="#E1B618">Lib Dem</th>
+                             <td>13</td>
+                             <td>-2</td>
+                         </tr>
+                         <tr>
+                             <th data-viz-color="#5D00A7">Ukip</th>
+                             <td>9</td>
+                             <td>+2</td>
+                         </tr>
+                         <tr>
+                             <th data-viz-color="#B3AEB5">Others</th>
+                             <td>8</td>
+                             <td>+1</td>
+                         </tr>
+                     </tbody>
+                 </table>
+                 <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+
                  @BodyCleaner(article)
             </div>
         </div>
