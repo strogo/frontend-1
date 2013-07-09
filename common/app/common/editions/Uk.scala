@@ -45,7 +45,7 @@ object Uk extends Edition(
 
   val configuredFronts = Map(
     Editionalise("", Uk) -> Seq(
-      ItemTrailblockDescription("", "News", numItemsVisible = 5, style = Some(Featured), showMore = true),
+      ItemTrailblockDescription("", "News", numItemsVisible = 5, style = Some(Refresh), showMore = true),
       ItemTrailblockDescription("sport", "Sport", numItemsVisible = 5, style = Some(Featured), showMore = true),
       ItemTrailblockDescription("commentisfree", "Comment is free", numItemsVisible = 3, style = Some(Featured), showMore = true),
       ItemTrailblockDescription("culture", "Culture", numItemsVisible = 3, style = Some(Thumbnail), showMore = true),
