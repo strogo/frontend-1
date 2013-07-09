@@ -45,39 +45,39 @@
                          <tr>
                              <th data-viz-display="false" data-viz-field-type="string">Party</th>
                              <th data-viz-display="true"  data-viz-field-type="integer" data-viz-field-unit="%">Share</th>
-                             <th data-viz-display="false" data-viz-field-type="string">Change</th>
+                             <!-- <th data-viz-display="false" data-viz-field-type="string">Change</th> -->
                          </tr>
                      </thead>
                      <tfoot>
                          <tr>
-                             <td colspan="3">Source: Guardian/ICM</td>
+                             <td colspan="2">Source: Guardian/ICM</td>
                          </tr>
                      </tfoot>
                      <tbody>
                          <tr>
                              <th data-viz-color="#D71E0C">Labour</th>
                              <td>41</td>
-                             <td>+3</td>
+                             <!-- <td>+3</td> -->
                          </tr>
                          <tr>
                              <th data-viz-color="#005DB7">Conservative</th>
                              <td>29</td>
-                             <td>-4</td>
+                             <!-- <td>-4</td> -->
                          </tr>
                          <tr>
                              <th data-viz-color="#E1B618">Lib Dem</th>
                              <td>13</td>
-                             <td>-2</td>
+                             <!-- <td>-2</td> -->
                          </tr>
                          <tr>
                              <th data-viz-color="#5D00A7">Ukip</th>
                              <td>9</td>
-                             <td>+2</td>
+                             <!-- <td>+2</td> -->
                          </tr>
                          <tr>
                              <th data-viz-color="#B3AEB5">Others</th>
                              <td>8</td>
-                             <td>+1</td>
+                             <!-- <td>+1</td> -->
                          </tr>
                      </tbody>
                  </table>
@@ -86,6 +86,21 @@
                     //define("doughnut", [], function ( ) {
 
                         'use strict';
+
+                        var doughnutDemoTable = document.querySelector('[data-viz-type=doughnut]'),
+                            doughnutDemoData = [];
+
+                        for (var i=0; i < doughnutDemoTable.tBodies[0].rows.length; i++) {
+                            var tableRow = doughnutDemoTable.tBodies[0].rows[i];
+                            doughnutDemoData.push(
+                                {
+                                    "Value": +tableRow.cells[1].innerHTML,
+                                    "Color": tableRow.cells[0].getAttribute('data-viz-color')
+                                }
+                            );
+                        }
+                        console.log(doughnutDemoData);
+
 
                         /*---------------------------------
                             Constructor
@@ -97,10 +112,7 @@
 
                                 var doughnutSize = 200,
                                     doughnutRadius = doughnutSize * 0.5,
-                                    data = [50,76,485,45,698],
-                                    colorData = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#00ffff'],
-
-                                    doughnut = d3.layout.pie().sort(null),
+                                    doughnut = d3.layout.pie().sort(null).value(function(d) { return d.Value }),
                                     arc = d3.svg.arc().innerRadius(50).outerRadius(doughnutRadius),
 
                                     svg = d3.select(this.displayObject)
@@ -111,18 +123,19 @@
                                             .attr("transform", "translate(" + doughnutRadius + "," + doughnutRadius + ")"),
 
                                     arcs = svg.selectAll("path")
-                                              .data(doughnut(data))
+                                              .data(doughnut(doughnutDemoData))
                                               .enter().append("svg:path")
-                                              .attr("fill", function(d, i) {return colorData[i]; })
+                                              .attr("fill", function(d, i) { return doughnutDemoData[i].Color; })
                                               .attr("d", arc)
-                                              .each(function(d) { this._current = d; });
+                                              .each(function(d) { this._current = d; })
+                                              .attr("transform", "rotate(-145)");
 
                                     svg.append('svg:text')
                                        .attr('dx', -25)
                                        .attr('dy', 20)
-                                       .attr("class", "someClassNameForYourText")
+                                       .attr("class", "doughnut__unit")
                                        .text("%");
-                                       
+
                                     document.querySelector('.article-body').appendChild(this.displayObject)
                                //}
                         //};
@@ -135,6 +148,12 @@
                     //    doughnut.init();
                     //});
                  </script>
+                 <style type="text/css" media="screen">
+                    .doughnut__unit {
+                        fill: #999;
+                        font-size: 58px;
+                    }
+                 </style>
 
                  @BodyCleaner(article)
             </div>
