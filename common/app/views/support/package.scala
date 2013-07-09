@@ -38,6 +38,11 @@ object Thumbnail extends Style { val className = "with-thumbnail" }
  */
 object Headline extends Style { val className = "headline-only" }
 
+/**
+ * refresh of trails
+ */
+object Refresh extends Style { val className = "refresh" }
+
 object MetadataJson {
 
   def apply(data: (String, Any)): String = data match {

@@ -1,0 +1,14 @@
+@(trails: Seq[Trail], numItemsVisible: Int = 5, related: Boolean = false)(implicit request: RequestHeader)
+
+<ul class="unstyled">
+    @trails.map { trail =>
+        <li class="trail@if(trail.mainPicture.nonEmpty){ trail--with-image}">
+            <a href="@LinkTo{@trail.url}" class="trail__link">
+                @trail.mainPicture.map { mainPicture =>
+                    <img class="maxed trail__img" src="@mainPicture.path" />
+                }
+                <h2 class="trail__title">@trail.headline</h2>
+            </a>
+        </li>
+    }
+</ul>

@@ -18,6 +18,7 @@
         data-section-id="@block.description.id">
 
         @block.description.style match {
+            case Some(Refresh)   => { @trailblocks.refresh(block.trails, block.description.numItemsVisible) }
             case Some(Thumbnail) => { @trailblocks.thumbnail(block.trails, block.description.numItemsVisible) }
             case Some(Headline)  => { @trailblocks.headline(block.trails, block.description.numItemsVisible) }
             case _               => { @trailblocks.featured(block.trails, block.description.numItemsVisible) }
