@@ -15,7 +15,8 @@ define('bootstraps/app', [
     "bootstraps/gallery",
     "bootstraps/interactive",
     "bootstraps/story",
-    "modules/pageconfig"
+    "modules/pageconfig",
+    "modules/touch-events"
 ], function (
     common,
     domReady,
@@ -119,7 +120,7 @@ define('bootstraps/app', [
             };
 
             common.mediator.on('page:ready', pageRoute);
-            
+
             common.mediator.emit('page:ready', config, context);
         });
     };
