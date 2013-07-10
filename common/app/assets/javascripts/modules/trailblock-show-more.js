@@ -21,7 +21,9 @@ define(['common', 'ajax', 'bonzo', 'bean', 'qwery'], function (common, ajax, bon
                     if (!trail) {
                         break;
                     }
-                    bonzo($cta.previous()).append(trail);
+                    bonzo(trail)
+                        .appendTo($cta.previous())
+                        .css('display', 'block');
                 }
                 // remove trails
                 trails[section] = trails[section].slice(trailblockLength);
@@ -60,19 +62,18 @@ define(['common', 'ajax', 'bonzo', 'bean', 'qwery'], function (common, ajax, bon
         this.init = function(context) {
 
             var that = this,
-                trailblocks = common.$g('.' + className, context);
+                $trailblocks = common.$g('.' + className, context);
 
-            if(! trailblocks.length) {
+            if(!$trailblocks.length) {
                 return;
             }
 
-            // Remove the class, so we can't do multiple inits
-            trailblocks.each(function(trailblock){
+            $trailblocks.each(function(trailblock){
+                // Remove the class, so we can't do multiple inits
                 bonzo(trailblock).removeClass('js-show-more');
+                // append the cta
+                that.view.appendCta(trailblock);
             });
-
-            // append the cta
-            trailblocks.each(this.view.appendCta);
 
             // event delegation for clicking of cta
             bean.on(context.querySelector('.front-container'), 'click', '.trailblock button.cta', function(e) {

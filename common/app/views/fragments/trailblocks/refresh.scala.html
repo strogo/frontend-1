@@ -1,14 +1,25 @@
 @(trails: Seq[Trail], numItemsVisible: Int = 5, related: Boolean = false)(implicit request: RequestHeader)
 
-<ul class="unstyled">
-    @trails.map { trail =>
-        <li class="trail@if(trail.mainPicture.nonEmpty){ trail--with-image}">
+<ul class="unstyled js-reveal-more">
+    @trails.zipWithIndex.map { case (trail, index) =>
+        <li class="trail@if(trail.mainPicture.nonEmpty){ trail--with-image}@if(index == 0){ trail--with-related}">
             <a href="@LinkTo{@trail.url}" class="trail__link">
                 @trail.mainPicture.map { mainPicture =>
                     <img class="maxed trail__img" src="@mainPicture.path" />
                 }
-                <h2 class="trail__title">@trail.headline</h2>
+                <h2 class="trail__title">@Html(trail.headline)</h2>
             </a>
+            @* testing 'stacking' *@
+            @if(index == -1) {
+                <ul class="unstyled trail__related">
+                    <li>
+                        <a href="#">Join the debate</a>
+                    </li>
+                    <li>
+                        <a href="#">Further stories</a>
+                    </li>
+                </ul>
+            }
         </li>
     }
 </ul>

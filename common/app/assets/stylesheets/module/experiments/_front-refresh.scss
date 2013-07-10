@@ -1,4 +1,14 @@
 @mixin featured {
+    .trail__title {
+        padding: 5px 10px;
+        background-color:rgba(255,255,255,0.6);
+        @include font($serifheadline, 600, 20, 28);
+        @include box-sizing(border-box);
+        width:100%;
+        margin:0;
+    }
+}
+@mixin featured--with-image {
     .trail__link {
         position:relative;
         display:block;
@@ -9,29 +19,6 @@
     .trail__title {
         position: absolute;
         bottom:0;
-        padding: 5px 10px;
-        background-color:rgba(255,255,255,0.6);
-        @include font($serifheadline, 600, 20, 28);
-        @include box-sizing(border-box);
-        width:100%;
-    }
-}
-@mixin secondary {
-    .trail__link {
-        position:relative;
-        display:block;
-    }
-    .trail__img {
-        width: 50%;
-    }
-    .trail__title {
-        position: absolute;
-        bottom:0;
-        padding: 5px 10px;
-        background-color:rgba(255,255,255,0.6);
-        @include font($serif, 500, 16, 22);
-        @include box-sizing(border-box);
-        width:100%;
     }
 }
 @mixin thumbnail {
@@ -57,29 +44,57 @@
     .trailblock ul {
         overflow:hidden;
     }
-
     .trail {
         padding-bottom: 0;
     }
+    .trail__related {
+        li {
+            border:1px solid #999999;
+            border-top:none;
+            padding:5px 10px;
+        }
+        a {
+            display:block;
+            @include font($serif, 500, 16, 22);
+        }
+    }
+    .trail__carousel {
+        display:none;
+    }
+    .trail__carousel-selected {
+        display:block;
+    }
 
+    /**
+     * MOBILE
+     */
     @media (max-width: $mobileMax) {
-         .trail:nth-child(1) {
+        .trail:nth-child(1) {
             @include featured;
         }
-        .trail:nth-child(2) {
-            @include secondary;
+        .trail--with-image:nth-child(1) {
+            @include featured--with-image;
         }
-        .trail:nth-child(n+3) {
+        .trail:nth-child(n+2) {
             @include thumbnail;
         }
-        .trail--with-image:nth-child(n+3)  {
+        .trail--with-image:nth-child(n+2)  {
             @include thumbnail--with-image;
         }
         .trail:nth-child(n+7) {
             display:none;
         }
+        .trail.trail--featured {
+            @include featured;
+        }
+        .trail.trail--featured.trail--with-image {
+            @include featured--with-image;
+        }
     }
 
+    /**
+     * TABLET
+     */
     @media (min-width: $tablet) and (max-width: $tabletMax) {
         .trail {
             width:50%;
@@ -96,37 +111,41 @@
         .trail:nth-child(-n+2){
             @include featured;
         }
-        .trail:nth-child(3),
-        .trail:nth-child(4){
-            width: 50%;
-            @include secondary;
+        .trail--with-image:nth-child(-n+2){
+            @include featured--with-image;
         }
-        .trail:nth-child(n+5) {
+        .trail:nth-child(n+3) {
             @include thumbnail;
         }
-        .trail--with-image:nth-child(n+5) {
+        .trail--with-image:nth-child(n+3) {
             @include thumbnail--with-image;
         }
         .trail:nth-child(n+11) {
             display:none;
         }
     }
-
     @media (min-width: $tablet) {
         .trailblock-show-more {
             display:none;
         }
     }
 
+    /**
+     * DESKTOP
+     */
     @media (min-width: $desktop) {
         .trail{
             float:left;
             @include box-sizing(border-box);
         }
-        .trail:nth-child(1),
-        .trail:nth-child(2) {
+        .trail:nth-child(-n+2){
             width:50%;
+        }
+        .trail:nth-child(-n+5){
             @include featured;
+        }
+        .trail--with-image:nth-child(-n+5){
+            @include featured--with-image;
         }
         .trail:nth-child(1) {
             border-right:6px solid #ffffff;
@@ -134,13 +153,15 @@
         .trail:nth-child(2){
             border-left:6px solid #ffffff;
         }
-        .trail:nth-child(n+3) {
-            width:33%;
-        }
         .trail:nth-child(3),
         .trail:nth-child(4),
         .trail:nth-child(5) {
-            @include secondary;
+            .trail__title {
+                @include font($serif, 500, 16, 22);
+            }
+        }
+        .trail:nth-child(n+3) {
+            width:33%;
         }
         .trail:nth-child(3n+3) {
             border-right:6px solid #ffffff;

@@ -7,7 +7,8 @@ define([
     "modules/trailblocktoggle",
     "modules/trailblock-show-more",
     "modules/footballfixtures",
-    "modules/cricket"
+    "modules/cricket",
+    'modules/trail-carousel'
 ], function (
     common,
     bonzo,
@@ -15,7 +16,8 @@ define([
     TrailblockToggle,
     TrailblockShowMore,
     FootballFixtures,
-    Cricket
+    Cricket,
+    trailCarousel
 ) {
 
     var modules = {
@@ -25,7 +27,7 @@ define([
                 Cricket.cricketTrail(config, context);
             });
         },
-            
+
         showTrailblockToggles: function () {
             var tt = new TrailblockToggle();
             common.mediator.on('page:front:ready', function(config, context) {
@@ -83,8 +85,14 @@ define([
                     }
                 }
             });
+        },
+
+        transcludeTrailCarousels: function () {
+            common.mediator.on('page:front:ready', function(config, context) {
+                trailCarousel.init(config, context);
+            });
         }
-        
+
     };
 
     var ready = function (config, context) {
@@ -95,6 +103,7 @@ define([
             modules.showTrailblockShowMore();
             modules.showFootballFixtures();
             modules.showCricket();
+            modules.transcludeTrailCarousels();
         }
         common.mediator.emit("page:front:ready", config, context);
     };
