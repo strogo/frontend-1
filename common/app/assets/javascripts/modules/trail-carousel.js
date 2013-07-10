@@ -22,7 +22,6 @@ define(['common', 'bonzo', 'qwery', 'bean'], function (common, bonzo, qwery, bea
                 e.preventDefault();
                 bonzo(carouselTrails[currentIndex]).removeClass(selectedClass);
                 currentIndex = (currentIndex + 1) % size;
-                console.log(currentIndex);
                 bonzo(carouselTrails[currentIndex]).addClass(selectedClass);
 
             });
