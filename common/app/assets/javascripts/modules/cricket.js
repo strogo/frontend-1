@@ -1,43 +1,41 @@
 define(['common', 'bonzo', 'ajax'], function (common, bonzo, ajax) {
 
-    function cricket(config, context, options) {
+    function cricketArticle(config, context, options) {
 
         /*
          Accepts these options:
 
-         url               - string
-         loadSummary       - bool
-         loadScorecard     - bool
-         summaryElement    - the element which the summary will be placed after
-         scorecardElement  - the element which the scorecard will be placed after
+         url                    - string
+         loadSummary            - bool
+         loadScorecard          - bool
+         summaryElement         - the element which the summary will be placed after
+         scorecardElement       - the element which the scorecard will be placed after
+         summaryManipulation    - the manipulation type for the summary DOM injection
+         scorecardManipulation  - the manipulation type for the scorecard DOM injection
          */
 
-        var url = "/sport" + options.url + ".json";
-
-        var summaryContainer = document.createElement("div");
-        summaryContainer.className = "after-headline";
-        var summaryInto = bonzo(summaryContainer);
-
-        var miniScorecardContainer = document.createElement("div");
-        miniScorecardContainer.className = "after-headline";
-        var scorecardInto = bonzo(miniScorecardContainer);
+        if (!config.switches.liveCricket) {
+            return;
+        }
 
         ajax({
-            url: url,
+            url: "/sport" + options.url + ".json",
             type: 'json',
             crossOrigin: true
         }).then(
             function(resp) {
-                if (!scorecardInto.hasClass('lazyloaded') && options.loadScorecard) {
-                    scorecardInto.html(resp.scorecard);
-                    scorecardInto.addClass('lazyloaded');
-                    bonzo(context.querySelector('.article-headline')).after(miniScorecardContainer);
+                if (options.loadScorecard) {
+                    var $scorecardInto = bonzo.create('<div>' + resp.scorecard + '</div>');
+                    bonzo($scorecardInto).addClass('cricket-scorecard lazyloaded');
+                    common.$g(options.scorecardElement)[options.scorecardManipulation]($scorecardInto);
+
                     common.mediator.emit('modules:cricketscorecard:loaded', config, context);
                 }
-                if (!summaryInto.hasClass('lazyloaded') && options.loadSummary) {
-                    summaryInto.html(resp.summary);
-                    summaryInto.addClass('lazyloaded');
-                    bonzo(context.querySelector('.article-headline')).after(summaryContainer);
+                if (options.loadSummary) {
+                    var $summaryInto = bonzo.create('<div>' + resp.summary + '</div>');
+                    bonzo($summaryInto).addClass('cricket-summary lazyloaded');
+                    common.$g(options.summaryElement)[options.summaryManipulation]($summaryInto);
+
                     common.mediator.emit('modules:cricketsummary:loaded', config, context);
                 }
             },
@@ -48,5 +46,33 @@ define(['common', 'bonzo', 'ajax'], function (common, bonzo, ajax) {
         common.mediator.emit('modules:cricket:loaded', config, context);
     }
 
-    return cricket;
+    function cricketTrail(config, context) {
+
+        var cricketElement = context.querySelector('[data-cricket-match]');
+
+        if (!cricketElement) {
+            return;
+        }
+
+        var firstCricketBlock = bonzo(cricketElement);
+
+        ajax({
+            url: "/sport" + cricketElement.getAttribute('data-cricket-match') + '.json',
+            type: 'json',
+            crossOrigin: true
+        }).then(
+            function(resp) {
+                firstCricketBlock.append(bonzo.create(resp.summary));
+            },
+            function(req) {
+                common.mediator.emit('module:error', 'Failed to load cricket: ' + req.statusText, 'modules/cricketsummary.js');
+            }
+        );
+        common.mediator.emit('modules:cricket:loaded', config, context);
+    }
+
+    return {
+        cricketArticle: cricketArticle,
+        cricketTrail: cricketTrail
+    };
 });
