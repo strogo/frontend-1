@@ -548,7 +548,6 @@ define([
     }
 
     var initialise = function(config, Scroller) {
-        console.log(Scroller);
         loadSequence(function(){
             var loc = window.location.href;
 

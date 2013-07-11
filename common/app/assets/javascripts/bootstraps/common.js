@@ -258,7 +258,6 @@ define([
             if (detect.canSwipe()) {
                 require('js!scroller', function(Scroller) {
                     swipeNav(config, Scroller);
-                    console.log('foooooop');
                 });
             }
             if (config.switches.swipeNav && detect.canSwipe()) {
