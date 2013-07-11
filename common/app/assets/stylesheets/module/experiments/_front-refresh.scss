@@ -58,17 +58,14 @@
             @include font($serif, 500, 16, 22);
         }
     }
-    .trail__carousel {
-        display:none;
-    }
-    .trail__carousel-selected {
-        display:block;
-    }
 
     /**
      * MOBILE
      */
     @media (max-width: $mobileMax) {
+        .trail {
+            z-index:1;
+        }
         .trail:nth-child(1) {
             @include featured;
         }
@@ -89,6 +86,12 @@
         }
         .trail.trail--featured.trail--with-image {
             @include featured--with-image;
+        }
+        .trail__carousel {
+            display:none;
+        }
+        .trail__carousel-selected {
+            display:block;
         }
     }
 

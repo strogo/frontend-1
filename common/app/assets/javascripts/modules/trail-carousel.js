@@ -19,10 +19,13 @@ define(['common', 'bonzo', 'qwery', 'bean'], function (common, bonzo, qwery, bea
             });
 
             bean.on(context.querySelector('.front-trailblock-tone-features'), 'click', '.trail__carousel', function(e) {
-                e.preventDefault();
-                bonzo(carouselTrails[currentIndex]).removeClass(selectedClass);
-                currentIndex = (currentIndex + 1) % size;
-                bonzo(carouselTrails[currentIndex]).addClass(selectedClass);
+                // z-index 1 is mobile breakpoint
+                if (window.getComputedStyle(context.querySelector('.front-trailblock-tone-features .trail')).getPropertyValue('z-index') === '1') {
+                    e.preventDefault();
+                    bonzo(carouselTrails[currentIndex]).removeClass(selectedClass);
+                    currentIndex = (currentIndex + 1) % size;
+                    bonzo(carouselTrails[currentIndex]).addClass(selectedClass);
+                }
 
             });
         }
