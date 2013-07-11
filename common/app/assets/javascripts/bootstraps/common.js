@@ -254,8 +254,12 @@ define([
         },
 
         initSwipe: function(config) {
-            if (config.switches.swipeNav && detect.canSwipe() && !userPrefs.isOff('swipe') || userPrefs.isOn('swipe-dev')) {
-                swipeNav(config);
+            //if (config.switches.swipeNav && detect.canSwipe() && !userPrefs.isOff('swipe') || userPrefs.isOn('swipe-dev')) {
+            if (detect.canSwipe()) {
+                require('js!scroller', function(Scroller) {
+                    swipeNav(config, Scroller);
+                    console.log('foooooop');
+                });
             }
             if (config.switches.swipeNav && detect.canSwipe()) {
                 bonzo(document.body).addClass('can-swipe');

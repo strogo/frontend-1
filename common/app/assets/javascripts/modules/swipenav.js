@@ -547,7 +547,8 @@ define([
         }, 1009); // Prime number, for good luck
     }
 
-    var initialise = function(config) {
+    var initialise = function(config, Scroller) {
+        console.log(Scroller);
         loadSequence(function(){
             var loc = window.location.href;
 

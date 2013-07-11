@@ -78,6 +78,14 @@ module.exports = function (grunt) {
             }
         },
 
+        uglify: {
+            common: {
+                files: {
+                    "common/app/assets/public/javascripts/vendor/ftscroller.min.js" : ['common/app/assets/javascripts/components/ftscroller/lib/ftscroller.js']
+                }
+            }
+        },
+
         casper: {
           options : {
             test : true,
@@ -233,6 +241,7 @@ module.exports = function (grunt) {
     grunt.loadNpmTasks('grunt-css-metrics');
     grunt.loadNpmTasks('grunt-contrib-jshint');
     grunt.loadNpmTasks('grunt-contrib-requirejs');
+    grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-webfontjson');
     grunt.loadNpmTasks('grunt-contrib-clean');
     grunt.loadNpmTasks('grunt-shell');
@@ -244,7 +253,7 @@ module.exports = function (grunt) {
     grunt.registerTask('test', ['test:common']);
 
     grunt.registerTask('compile:common:css', ['sass:common']);
-    grunt.registerTask('compile:common:js', ['requirejs:common']);
+    grunt.registerTask('compile:common:js', ['requirejs:common', 'uglify:common']);
     grunt.registerTask('compile', ['compile:common:css', 'compile:common:js']);
 
     grunt.registerTask('analyse:common:css', ['cssmetrics:common']);
