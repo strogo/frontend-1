@@ -31,7 +31,8 @@ define([
     'modules/swipenav',
     "modules/adverts/video",
     "modules/discussion/commentCount",
-    "modules/lightbox-gallery"
+    "modules/lightbox-gallery",
+    "modules/dataviz"
 ], function (
     common,
     ajax,
@@ -64,7 +65,8 @@ define([
     swipeNav,
     VideoAdvert,
     CommentCount,
-    LightboxGallery
+    LightboxGallery,
+    DataViz
 ) {
 
     var modules = {
@@ -331,6 +333,8 @@ define([
             modules.initSwipe(config);
             modules.transcludeCommentCounts();
             modules.initLightboxGalleries();
+
+            var d = new DataViz();
         }
         common.mediator.emit("page:common:ready", config, context);
     };

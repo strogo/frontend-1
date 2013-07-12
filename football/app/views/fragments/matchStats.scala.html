@@ -26,6 +26,27 @@
     }
 }
 
+
+@vizStat(title: String, home: Int, away: Int, firstItem: Boolean = false) = {
+    @defining(home + away){ total =>
+        @defining(PercentMaker(home, away)){ case (homePercent, awayPercent) =>
+            <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+            <table data-viz-type="doughnut">
+                <tbody>
+                    <tr>
+                        <th data-viz-color="#19646e">Home</th>
+                        <td>@home</td>
+                    </tr>
+                    <tr>
+                        <th data-viz-color="#20a111">Away</th>
+                        <td>@away</td>
+                    </tr>
+                </tbody>
+            </table>
+        }
+    }
+}
+
 @events(player: LineUpPlayer) = {
     @player.events.map{ event =>
         @{ event.eventType match {
@@ -60,6 +81,7 @@
     <h5 class="away-header type-5">@awayTeam.name</h5>
 
     @defining((page.lineUp.homeTeam, page.lineUp.awayTeam)){ case (homeStats, awayStats) =>
+      @vizStat("Possession", page.lineUp.homeTeamPossession, page.lineUp.awayTeamPossession, firstItem = true)
       @stat("Possession", page.lineUp.homeTeamPossession, page.lineUp.awayTeamPossession, firstItem = true)
       @stat("Goal attempts", homeStats.shotsOn + homeStats.shotsOff, awayStats.shotsOn + awayStats.shotsOff)
       @stat("On target", homeStats.shotsOn, awayStats.shotsOn)
